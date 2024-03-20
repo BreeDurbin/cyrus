@@ -5,6 +5,11 @@ cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+
+#find_package(Boost 1.84.0 COMPONENTS *boost libraries here*) 
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -23,4 +28,4 @@ add_executable(cyrus
     resources.qrc
 )
 
-target_link_libraries(cyrus Qt6::Widgets)
+target_link_libraries(cyrus Qt6::Widgets ${Boost_LIBRARIES})
