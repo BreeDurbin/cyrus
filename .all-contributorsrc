@@ -1,4 +1,21 @@
 {
   "projectName": "cyrus",
-  "projectOwner": "BreeDurbin"
+  "projectOwner": "BreeDurbin",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "BreeDurbin",
+      "name": "Bree Lynne Durbin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88691414?v=4",
+      "profile": "https://breedurbin.carrd.co",
+      "contributions": [
+        "code"
+      ]
+    }
+  ]
 }
