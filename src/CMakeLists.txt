@@ -1,10 +1,8 @@
 
-
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 
-# commented out because specific boost libraries not picked yet
 find_package(Boost 1.83.0 COMPONENTS filesystem) 
 
 set(CMAKE_AUTOMOC ON)
@@ -19,15 +17,14 @@ find_package(Qt6 COMPONENTS Widgets Gui REQUIRED)
 qt_standard_project_setup()
 
 add_executable(
-    cyrus
+    ${PROJECT_NAME}
+    creaturecombobox.cpp
     mainwindow.cpp
     main.cpp
-    widget/pccombobox.cpp
-    widget/monstercombobox.cpp
 )
 
 target_link_libraries(
-    cyrus 
+    ${PROJECT_NAME} 
     PRIVATE 
     Qt6::Widgets 
     Qt6::Gui
@@ -35,7 +32,7 @@ target_link_libraries(
 )
 
 set_target_properties(
-    cyrus 
+    ${PROJECT_NAME}
     PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON

@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <iostream>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -22,6 +24,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeInitiative(QVBoxLayout* layout){
 
+    std::cout << "initializeInitiative" << std::endl;
+
+
     QPushButton *button1 = new QPushButton("One");
     QPushButton *button2 = new QPushButton("Two");
     QPushButton *button3 = new QPushButton("Three");
@@ -38,10 +43,16 @@ void MainWindow::initializeInitiative(QVBoxLayout* layout){
 
 
 void MainWindow::initializeCreatureRepository(QVBoxLayout* layout){
-    QComboBox *pcComboBox = new PcComboBox();
-    QComboBox *monsterComboBox = new MonsterComboBox();
+
+    std::cout << "initializeCreatureRepository1" << std::endl;
+
+    QComboBox *pcComboBox = new CreatureComboBox();
+    QComboBox *monsterComboBox = new CreatureComboBox();
+
+    std::cout << "initializeCreatureRepository2" << std::endl;
 
     layout->addWidget(pcComboBox);
     layout->addWidget(monsterComboBox);
 
+    std::cout << "initializeCreatureRepository3" << std::endl;
 }

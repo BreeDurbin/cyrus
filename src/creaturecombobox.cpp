@@ -1,8 +1,6 @@
-#include "pccombobox.h"
+#include "creaturecombobox.h"
 
-#include <QLineEdit>
-
-PcComboBox::PcComboBox(QWidget *parent)
+CreatureComboBox::CreatureComboBox(QWidget *parent)
     : QComboBox(parent)
 {
     connect(lineEdit(), &QLineEdit::editingFinished,

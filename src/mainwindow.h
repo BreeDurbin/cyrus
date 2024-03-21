@@ -4,12 +4,8 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include "widget/monstercombobox.h"
-#include "widget/pccombobox.h"
+#include "creaturecombobox.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
