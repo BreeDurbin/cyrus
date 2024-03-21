@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include "widget/monstercombobox.h"
+#include "widget/pccombobox.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,5 +21,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private:
+    void initializeInitiative(QVBoxLayout* layout);
+    void initializeCreatureRepository(QVBoxLayout* layout);
 };
+
 #endif // MAINWINDOW_H

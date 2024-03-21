@@ -15,19 +15,22 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Gui REQUIRED)
 qt_standard_project_setup()
 
 add_executable(
     cyrus
     mainwindow.cpp
     main.cpp
+    widget/pccombobox.cpp
+    widget/monstercombobox.cpp
 )
 
 target_link_libraries(
     cyrus 
     PRIVATE 
     Qt6::Widgets 
+    Qt6::Gui
     ${Boost_LIBRARIES}
 )
 

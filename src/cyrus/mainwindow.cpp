@@ -9,6 +9,19 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout;
     centralWidget->setLayout(layout);
 
+    initializeInitiative(layout);
+    initializeCreatureRepository(layout);
+
+
+    centralWidget->show();
+}
+
+MainWindow::~MainWindow()
+{
+}
+
+void MainWindow::initializeInitiative(QVBoxLayout* layout){
+
     QPushButton *button1 = new QPushButton("One");
     QPushButton *button2 = new QPushButton("Two");
     QPushButton *button3 = new QPushButton("Three");
@@ -21,9 +34,14 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(button4);
     layout->addWidget(button5);
 
-    centralWidget->show();
 }
 
-MainWindow::~MainWindow()
-{
+
+void MainWindow::initializeCreatureRepository(QVBoxLayout* layout){
+    QComboBox *pcComboBox = new PcComboBox();
+    QComboBox *monsterComboBox = new MonsterComboBox();
+
+    layout->addWidget(pcComboBox);
+    layout->addWidget(monsterComboBox);
+
 }

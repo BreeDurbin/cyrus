@@ -4,6 +4,7 @@
         "qtextstream": "cpp",
         "string": "cpp",
         "new": "cpp",
-        "qmainwindow": "cpp"
+        "qmainwindow": "cpp",
+        "qcombobox": "cpp"
     }
 }
