@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <QStringList>
+#include "creaturecombobox.h"
 #include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -47,6 +49,9 @@ void MainWindow::initializeCreatureRepository(QVBoxLayout* layout){
     std::cout << "initializeCreatureRepository1" << std::endl;
 
     QComboBox *pcComboBox = new CreatureComboBox();
+
+    pcComboBox->addItems({ "Billiam", "Taliesin", "Egon", "Edra" });
+
     QComboBox *monsterComboBox = new CreatureComboBox();
 
     std::cout << "initializeCreatureRepository2" << std::endl;

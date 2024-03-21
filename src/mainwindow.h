@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include "creaturecombobox.h"
 
 
 class MainWindow : public QMainWindow

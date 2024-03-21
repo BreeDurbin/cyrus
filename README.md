@@ -14,7 +14,6 @@ A simple initiative tracker for d&amp;d and other ttrpgs
 
 Dependencies:
 ```
-g++
 make
 cmake 3.28.3
 qt6
