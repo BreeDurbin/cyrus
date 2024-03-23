@@ -50,13 +50,25 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     outer->addLayout(inner);
 
     QListView *pcRepository = new QListView();
-    pcRepository->setModel(new QStringListModel(QStringList() << "Billiam" << "Taliesin" << "Egon" << "Edra"));
+    auto pcList = new QStringListModel(QStringList() << "Billiam" << "Taliesin" << "Egon" << "Edra");
+    pcList->setHeaderData(0, Qt::Horizontal, "Player Characters");
+    pcList->setHeaderData(1, Qt::Horizontal, "Initiative");
+    pcList->setHeaderData(2, Qt::Horizontal, "HP");
+    pcRepository->setModel(pcList);
+    pcRepository->setSelectionMode(QAbstractItemView::SingleSelection);
+    pcRepository->setSelectionBehavior(QAbstractItemView::SelectRows);
+    pcRepository->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    pcRepository->setDragEnabled(true);
     inner->addWidget(pcRepository);
     pcRepository->show();
 
 
     QListView *monsterRepository = new QListView();
     monsterRepository->setModel(new QStringListModel(QStringList() << "Goblin" << "Orc" << "Giant" << "Dragon"));
+    monsterRepository->setSelectionMode(QAbstractItemView::SingleSelection);
+    monsterRepository->setSelectionBehavior(QAbstractItemView::SelectRows);
+    monsterRepository->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    monsterRepository->setDragEnabled(true);
     inner->addWidget(monsterRepository);
     monsterRepository->show();
 }
