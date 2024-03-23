@@ -3,61 +3,60 @@
 #include <QStringList>
 #include "creaturecombobox.h"
 #include <iostream>
+#include <QGroupBox>
+#include <QLabel>
+#include <QTextEdit>
+#include <QListView>
+#include <QStringListModel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    centralWidget = new QWidget();
-    setCentralWidget(centralWidget);
+    this->setWindowTitle("Hello World");
+    this->setMinimumSize(1920, 1080);
 
-    QVBoxLayout *layout = new QVBoxLayout;
-    centralWidget->setLayout(layout);
+    QHBoxLayout *outer = new QHBoxLayout(this);
+    auto title = new QLabel("Combat Tracker");
 
-    initializeInitiative(layout);
-    initializeCreatureRepository(layout);
+    QWidget *center = new QWidget();
+    setCentralWidget(center);
+    center->setLayout(outer);
 
+    initializeInitiative(outer);
+    initializeCreatureRepository(outer);
 
-    centralWidget->show();
+    this->centralWidget()->show();
 }
 
 MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::initializeInitiative(QVBoxLayout* layout){
+void MainWindow::initializeInitiative(QHBoxLayout* outer){
 
-    std::cout << "initializeInitiative" << std::endl;
+    QVBoxLayout *inner = new QVBoxLayout;
+    outer->addLayout(inner);
 
-
-    QPushButton *button1 = new QPushButton("One");
-    QPushButton *button2 = new QPushButton("Two");
-    QPushButton *button3 = new QPushButton("Three");
-    QPushButton *button4 = new QPushButton("Four");
-    QPushButton *button5 = new QPushButton("Five");
-
-    layout->addWidget(button1);
-    layout->addWidget(button2);
-    layout->addWidget(button3);
-    layout->addWidget(button4);
-    layout->addWidget(button5);
-
+    QListView *initiativeList = new QListView();
+    initiativeList->setModel(new QStringListModel(QStringList() << "Billiam" << "Taliesin" << "Egon" << "Edra"));
+    inner->addWidget(initiativeList);
+    initiativeList->show();
 }
 
 
-void MainWindow::initializeCreatureRepository(QVBoxLayout* layout){
+void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
+    
+    QVBoxLayout *inner = new QVBoxLayout;
+    outer->addLayout(inner);
 
-    std::cout << "initializeCreatureRepository1" << std::endl;
+    QListView *pcRepository = new QListView();
+    pcRepository->setModel(new QStringListModel(QStringList() << "Billiam" << "Taliesin" << "Egon" << "Edra"));
+    inner->addWidget(pcRepository);
+    pcRepository->show();
 
-    QComboBox *pcComboBox = new CreatureComboBox();
 
-    pcComboBox->addItems({ "Billiam", "Taliesin", "Egon", "Edra" });
-
-    QComboBox *monsterComboBox = new CreatureComboBox();
-
-    std::cout << "initializeCreatureRepository2" << std::endl;
-
-    layout->addWidget(pcComboBox);
-    layout->addWidget(monsterComboBox);
-
-    std::cout << "initializeCreatureRepository3" << std::endl;
+    QListView *monsterRepository = new QListView();
+    monsterRepository->setModel(new QStringListModel(QStringList() << "Goblin" << "Orc" << "Giant" << "Dragon"));
+    inner->addWidget(monsterRepository);
+    monsterRepository->show();
 }

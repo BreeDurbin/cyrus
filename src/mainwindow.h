@@ -9,16 +9,14 @@
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    QWidget *centralWidget;
-    QPushButton* button;
 
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private:
-    void initializeInitiative(QVBoxLayout* layout);
-    void initializeCreatureRepository(QVBoxLayout* layout);
+    void initializeInitiative(QHBoxLayout* layout);
+    void initializeCreatureRepository(QHBoxLayout* layout);
 };
 
 #endif // MAINWINDOW_H

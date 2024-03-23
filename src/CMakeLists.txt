@@ -13,7 +13,7 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-find_package(Qt6 COMPONENTS Widgets Gui REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Gui REQUIRED)
 qt_standard_project_setup()
 
 add_executable(
@@ -26,6 +26,7 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME} 
     PRIVATE 
+    Qt6::Core
     Qt6::Widgets 
     Qt6::Gui
     ${Boost_LIBRARIES}

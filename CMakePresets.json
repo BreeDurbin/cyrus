@@ -1,0 +1,17 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "make",
+            "displayName": "Configure preset using toolchain file",
+            "description": "Sets Makefile generator, build and install directory",
+            "generator": "Makefile",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install"
+            }
+        }
+    ]
+}
