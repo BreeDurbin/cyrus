@@ -1,4 +1,5 @@
 #include "creaturecombobox.h"
+#include <dracula.h>
 
 CreatureComboBox::CreatureComboBox(QWidget *parent)
     : QComboBox(parent)
@@ -7,4 +8,8 @@ CreatureComboBox::CreatureComboBox(QWidget *parent)
             this, [&] () { emit currentTextSaved(currentText()); });
     connect(this, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [&] (int index) { Q_UNUSED(index) emit currentTextSaved(currentText()); });
+
+    setStyleSheet();
+    
 }
+
