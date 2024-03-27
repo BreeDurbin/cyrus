@@ -50,3 +50,15 @@ QVariant CreatureModel::data(const QModelIndex &index, int role) const{
     }
 }
 
+QHash<int, QByteArray> CreatureModel::roleNames() const{
+    QHash<int, QByteArray> roles;
+    roles[Qt::TextAlignmentRole] = "textAlignment";
+    roles[Qt::FontRole] = "font";
+    roles[Qt::BackgroundRole] = "background";
+    roles[Qt::ForegroundRole] = "foreground";
+    roles[Qt::DecorationRole] = "decoration";
+    roles[Qt::DisplayRole] = "display";
+    roles[Qt::EditRole] = "edit";
+    return roles;
+}
+
