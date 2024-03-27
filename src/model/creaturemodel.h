@@ -1,13 +1,23 @@
-#include <QAbstractItemModel>
+#include <QAbstractListModel>
 
-class CreatureModel : public QAbstractItemModel
+
+struct CreatureItem // nested class
 {
+    QString name;
+    QString type;
+    int level;
+    int initiative;
+};
+
+class CreatureModel : public QAbstractListModel{
+
     Q_OBJECT
+
 public:
-    CreatureModel(QObject *parent = nullptr) : QAbstractItemModel(parent);
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex());
-    QModelIndex parent(const QModelIndex &child);
-    int rowCount(const QModelIndex &parent = QModelIndex());
-    int columnCount(const QModelIndex &parent = QModelIndex());
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole);
+    CreatureModel(QObject *parent = nullptr);
+    int rowCount(const QModelIndex &parent) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+
+private:
+    std::vector<CreatureItem> creatures;
 };

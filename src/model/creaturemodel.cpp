@@ -1,81 +1,52 @@
 #include "creaturemodel.h"
+#include <QBrush>
+#include <QColor>
+#include <QFont>
+#include <QIcon>
 
-CreatureModel::CreatureModel(QObject *parent) : QAbstractItemModel(parent)
-{
-    rootItem = new CreatureItem();
+
+CreatureModel::CreatureModel(QObject *parent){
+    auto temp = new CreatureItem;
+    temp->name = "root";
+    temp->type = "root";
+    temp->level = 0;
+    temp->initiative = 0;
+    creatures.push_back(*temp);
+    auto temp2 = new CreatureItem;
+    temp->name = "hiya";
+    temp->type = "dwagon";
+    temp->level = 9001;
+    temp->initiative = 293;
+    creatures.push_back(*temp2);
 }
 
-CreatureModel::~CreatureModel()
-{
-    delete rootItem;
+
+
+int CreatureModel::rowCount(const QModelIndex &parent) const{
+    return !parent.isValid() ? creatures.size() : 0;
 }
 
-QModelIndex CreatureModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (!hasIndex(row, column, parent))
-        return QModelIndex();
-
-    CreatureItem *parentItem;
-
-    if (!parent.isValid())
-        parentItem = rootItem;
-    else
-        parentItem = static_cast<CreatureItem *>(parent.internalPointer());
-
-    CreatureItem *childItem = parentItem->child(row);
-    if (childItem)
-        return createIndex(row, column, childItem);
-    else
-        return QModelIndex();
-}
-
-QModelIndex CreatureModel::parent(const QModelIndex &child) const
-{
-    if (!child.isValid())
-        return QModelIndex();
-
-    CreatureItem *childItem = static_cast<CreatureItem *>(child.internalPointer());
-    CreatureItem *parentItem = childItem->parent();
-
-    if (parentItem == rootItem)
-        return QModelIndex();
-
-    return createIndex(parentItem->row(), 0, parentItem);
-}
-
-int CreatureModel::rowCount(const QModelIndex &parent) const
-{
-    CreatureItem *parentItem;
-    if (parent.column() > 0)
-        return 0;
-
-    if (!parent.isValid())
-        parentItem = rootItem;
-    else
-        parentItem = static_cast<CreatureItem *>(parent.internalPointer());
-
-    return parentItem->childCount();
-}
-
-int CreatureModel::columnCount(const QModelIndex &parent) const
-{
-    if (parent.isValid())
-        return static_cast<CreatureItem *>(parent.internalPointer())->columnCount();
-    else
-        return rootItem->columnCount();
-}
-
-QVariant CreatureModel::data(const QModelIndex &index, int role) const
-{
+QVariant CreatureModel::data(const QModelIndex &index, int role) const{
     if (!index.isValid())
         return QVariant();
 
-    if (role != Qt::DisplayRole)
-        return QVariant();
-
-    CreatureItem *item = static_cast<CreatureItem *>(index.internalPointer());
-
-    return item->data(index.column());
+    switch(role){
+        case Qt::TextAlignmentRole:
+            return Qt::AlignCenter;
+        case Qt::FontRole:
+            return QFont("Helvetica", 16, QFont::Bold);
+        case Qt::BackgroundRole:
+            return QBrush(QColor(60, 60, 60));
+        case Qt::ForegroundRole:    
+            return QBrush(QColor(255, 255, 255));
+        case Qt::DecorationRole:
+            return QIcon(":/icons/monster.png");
+        case Qt::DisplayRole:
+            return QString(creatures[index.row()].name + " " + creatures[index.row()].type + " " + QString::number(creatures[index.row()].level) + " " + QString::number(creatures[index.row()].initiative));
+        case Qt::EditRole:
+            return QString(creatures[index.row()].name + " " + creatures[index.row()].type + " " + QString::number(creatures[index.row()].level) + " " + QString::number(creatures[index.row()].initiative));
+        default:
+            return QVariant();
+    }
 }
-
 

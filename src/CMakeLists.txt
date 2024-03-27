@@ -20,21 +20,23 @@ qt_standard_project_setup()
 add_executable(
     ${PROJECT_NAME}
     #src
-    creaturecombobox.cpp
     mainwindow.cpp
     main.cpp
 
     #component
-    creaturecombobox.cpp
-    creaturerepository.cpp
-    effectrepository.cpp
+    #creaturecombobox.cpp
+    #creaturerepository.cpp
+    #effectrepository.cpp
 
     #model
-    effectmodel.cpp
-    creaturemodel.cpp
+    #effectmodel.cpp
+    model/creaturemodel.cpp
 
     #stylesheet
-    dracula.h
+    stylesheet/dracula.h
+
+    #resources
+    resources.qrc
 )
 
 target_link_libraries(

@@ -5,8 +5,8 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 
-
-class MainWindow : public QMainWindow
+class MainWindow 
+    : public QMainWindow
 {
     Q_OBJECT
 
