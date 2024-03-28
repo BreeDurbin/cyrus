@@ -17,7 +17,10 @@ MainWindow::MainWindow(QWidget *parent)
     this->setMinimumSize(1920, 1080);
     this->setObjectName("MainWindow");
 
-    setStyleSheet("#MainWindow { background-image: url(:/images/cyrus_background.png); }");
+    setStyleSheet("#MainWindow { border-image: url(:/images/cyrus_background.png) 0 0 0 0 stretch stretch;}");
+
+    setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
+    //setBackgroundRole(QPalette::Background);
 
     // core layout
     QHBoxLayout *outer = new QHBoxLayout();
@@ -38,12 +41,20 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::initializeInitiative(QHBoxLayout* outer){
-
+    //persian gold 235, 180, 15
+    // deep gold 194, 155, 12
     QVBoxLayout *inner = new QVBoxLayout;
     outer->addLayout(inner);
-    inner->addWidget(new QLabel("Initiative Tracker"));
+    auto banner = new QLabel("Initiative Tracker");
+    banner->setFont(QFont("Helvetica", 24, QFont::Bold));
+    auto palette = banner->palette();
+    palette.setColor(banner->foregroundRole(), QColor(235, 180, 15));
+    banner->setPalette(palette);
+
+    inner->addWidget(banner);
 
     QListView *initiativeRepository = new QListView();
+    initiativeRepository->viewport()->setAutoFillBackground(false);
     auto initiativeList = new CreatureModel();
     initiativeRepository->setModel(initiativeList);
     inner->addWidget(initiativeRepository);
@@ -53,9 +64,26 @@ void MainWindow::initializeInitiative(QHBoxLayout* outer){
     inner->addLayout(innerBottom);
 
     QPushButton *sortButton = new QPushButton("Sort");
+    sortButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    sortButton->setFixedWidth(100);
+    sortButton->setFixedHeight(50);
+    sortButton->setFont(QFont("Helvetica", 16, QFont::Bold));
     innerBottom->addWidget(sortButton);
 
     QPushButton *nextButton = new QPushButton("Next");
+    nextButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    nextButton->setFixedWidth(100);
+    nextButton->setFixedHeight(50);
+    nextButton->setFont(QFont("Helvetica", 16, QFont::Bold));
+
+    QPalette pal = nextButton->palette();
+    pal.setColor(QPalette::Button, QColor(12, 51, 194));
+    pal.setColor(QPalette::ButtonText, QColor(235, 180, 15));
+    pal.setColor(QPalette::Highlight, QColor(235, 180, 15));
+    nextButton->setAutoFillBackground(true);
+    nextButton->setPalette(pal);
+    nextButton->update();
+
     innerBottom->addWidget(nextButton);
 }
 
@@ -68,11 +96,19 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     // Player Character Repository
     QHBoxLayout *pcRepositoryBannerLayout = new QHBoxLayout;
     inner->addLayout(pcRepositoryBannerLayout);
-    pcRepositoryBannerLayout->addWidget(new QLabel("Character Repository"));
+    
+    auto banner = new QLabel("Character Repository");
+    banner->setFont(QFont("Helvetica", 24, QFont::Bold));
+    auto palette = banner->palette();
+    palette.setColor(banner->foregroundRole(), QColor(235, 180, 15));
+    banner->setPalette(palette);
+
+    pcRepositoryBannerLayout->addWidget(banner);
     QPushButton *addPcButton = new QPushButton("Add Player Character");
     pcRepositoryBannerLayout->addWidget(addPcButton);
 
     QListView *pcRepository = new QListView();
+    pcRepository->viewport()->setAutoFillBackground(false);
     auto pcList = new CreatureModel();
     pcRepository->setModel(pcList);
     inner->addWidget(pcRepository);
