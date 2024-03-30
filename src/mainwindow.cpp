@@ -76,13 +76,15 @@ void MainWindow::initializeInitiative(QHBoxLayout* outer){
     nextButton->setFixedHeight(50);
     nextButton->setFont(QFont("Helvetica", 16, QFont::Bold));
 
-    QPalette pal = nextButton->palette();
+QPalette pal = nextButton->palette();
     pal.setColor(QPalette::Button, QColor(12, 51, 194));
     pal.setColor(QPalette::ButtonText, QColor(235, 180, 15));
     pal.setColor(QPalette::Highlight, QColor(235, 180, 15));
     nextButton->setAutoFillBackground(true);
     nextButton->setPalette(pal);
     nextButton->update();
+
+    QObject::connect(sortButton, &QPushButton::clicked, initiativeList, &CreatureModel::sort);
 
     innerBottom->addWidget(nextButton);
 }
@@ -94,8 +96,8 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     outer->addLayout(inner);
 
     // Player Character Repository
-    QHBoxLayout *pcRepositoryBannerLayout = new QHBoxLayout;
-    inner->addLayout(pcRepositoryBannerLayout);
+    QHBoxLayout *creatureRepositoryBannerLayout = new QHBoxLayout;
+    inner->addLayout(creatureRepositoryBannerLayout);
     
     auto banner = new QLabel("Character Repository");
     banner->setFont(QFont("Helvetica", 24, QFont::Bold));
@@ -103,16 +105,26 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     palette.setColor(banner->foregroundRole(), QColor(235, 180, 15));
     banner->setPalette(palette);
 
-    pcRepositoryBannerLayout->addWidget(banner);
+    creatureRepositoryBannerLayout->addWidget(banner);
     QPushButton *addPcButton = new QPushButton("Add Player Character");
-    pcRepositoryBannerLayout->addWidget(addPcButton);
+    creatureRepositoryBannerLayout->addWidget(addPcButton);
 
-    QListView *pcRepository = new QListView();
-    pcRepository->viewport()->setAutoFillBackground(false);
+    QListView *creatureRepository = new QListView();
+    creatureRepository->viewport()->setAutoFillBackground(false);
     auto pcList = new CreatureModel();
-    pcRepository->setModel(pcList);
-    inner->addWidget(pcRepository);
-    pcRepository->show();
+    creatureRepository->setModel(pcList);
+    inner->addWidget(creatureRepository);
+    creatureRepository->show();
+
+    //connections
+    connect(addPcButton, &QPushButton::clicked, [pcList](){
+        CreatureItem temp;
+        temp.name = "New PC";
+        temp.type = "PC";
+        temp.level = 1;
+        temp.initiative = 0;
+        pcList->addRows(temp);
+    });
 
     // Effect Tracker
     /*QHBoxLayout *effectBannerLayout = new QHBoxLayout;
