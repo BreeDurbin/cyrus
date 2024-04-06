@@ -1,16 +1,19 @@
-#include "mainwindow.h"
+#include <mainwindow.hpp>
+
+#include <iostream>
 
 #include <QStringList>
-#include <iostream>
 #include <QGroupBox>
-#include <QLabel>
 #include <QTextEdit>
-#include <QListView>
 #include <QStringListModel>
-#include "model/creaturemodel.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+#include <clabel.hpp>
+#include <cpushbutton.hpp>
+#include <clistview.hpp>
+#include <creaturemodel.hpp>
+#include <ctabwidget.hpp>
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     //title and size
     this->setWindowTitle("Cyrus: Combat Tracker");
@@ -24,9 +27,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     // core layout
     QHBoxLayout *outer = new QHBoxLayout();
-    QWidget *center = new QWidget();
-    setCentralWidget(center);
-    center->setLayout(outer);
+
+    //tab setup
+    CTabWidget *tabs = new CTabWidget();
+    tabs->setDocumentMode(true);
+    auto combatTab = new QWidget();
+    combatTab->setAutoFillBackground(false);
+    combatTab->setLayout(outer);
+    tabs->addTab(combatTab, "Combat");
+    tabs->addTab(new QWidget(), "Bestiary");
+    tabs->addTab(new QWidget(), "World");
+    tabs->addTab(new QWidget(), "Settings");
+
+    setCentralWidget(tabs);
 
     // initialization calls
     initializeInitiative(outer);
@@ -45,16 +58,11 @@ void MainWindow::initializeInitiative(QHBoxLayout* outer){
     // deep gold 194, 155, 12
     QVBoxLayout *inner = new QVBoxLayout;
     outer->addLayout(inner);
-    auto banner = new QLabel("Initiative Tracker");
-    banner->setFont(QFont("Helvetica", 24, QFont::Bold));
-    auto palette = banner->palette();
-    palette.setColor(banner->foregroundRole(), QColor(235, 180, 15));
-    banner->setPalette(palette);
 
+    auto banner = new CLabel("Initiative Tracker");
     inner->addWidget(banner);
 
-    QListView *initiativeRepository = new QListView();
-    initiativeRepository->viewport()->setAutoFillBackground(false);
+    CListView *initiativeRepository = new CListView();
     auto initiativeList = new CreatureModel();
     initiativeRepository->setModel(initiativeList);
     inner->addWidget(initiativeRepository);
@@ -63,29 +71,11 @@ void MainWindow::initializeInitiative(QHBoxLayout* outer){
     QHBoxLayout *innerBottom = new QHBoxLayout;
     inner->addLayout(innerBottom);
 
-    QPushButton *sortButton = new QPushButton("Sort");
-    sortButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    sortButton->setFixedWidth(100);
-    sortButton->setFixedHeight(50);
-    sortButton->setFont(QFont("Helvetica", 16, QFont::Bold));
+    CPushButton *sortButton = new CPushButton("Sort");
+    QObject::connect(sortButton, &QPushButton::clicked, initiativeList, &CreatureModel::sort);
     innerBottom->addWidget(sortButton);
 
-    QPushButton *nextButton = new QPushButton("Next");
-    nextButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    nextButton->setFixedWidth(100);
-    nextButton->setFixedHeight(50);
-    nextButton->setFont(QFont("Helvetica", 16, QFont::Bold));
-
-QPalette pal = nextButton->palette();
-    pal.setColor(QPalette::Button, QColor(12, 51, 194));
-    pal.setColor(QPalette::ButtonText, QColor(235, 180, 15));
-    pal.setColor(QPalette::Highlight, QColor(235, 180, 15));
-    nextButton->setAutoFillBackground(true);
-    nextButton->setPalette(pal);
-    nextButton->update();
-
-    QObject::connect(sortButton, &QPushButton::clicked, initiativeList, &CreatureModel::sort);
-
+    CPushButton *nextButton = new CPushButton("Next");
     innerBottom->addWidget(nextButton);
 }
 
@@ -99,18 +89,13 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     QHBoxLayout *creatureRepositoryBannerLayout = new QHBoxLayout;
     inner->addLayout(creatureRepositoryBannerLayout);
     
-    auto banner = new QLabel("Character Repository");
-    banner->setFont(QFont("Helvetica", 24, QFont::Bold));
-    auto palette = banner->palette();
-    palette.setColor(banner->foregroundRole(), QColor(235, 180, 15));
-    banner->setPalette(palette);
-
+    auto banner = new CLabel("Character Repository");
     creatureRepositoryBannerLayout->addWidget(banner);
-    QPushButton *addPcButton = new QPushButton("Add Player Character");
+
+    CPushButton *addPcButton = new CPushButton("Add Player Character");
     creatureRepositoryBannerLayout->addWidget(addPcButton);
 
-    QListView *creatureRepository = new QListView();
-    creatureRepository->viewport()->setAutoFillBackground(false);
+    auto creatureRepository = new CListView();
     auto pcList = new CreatureModel();
     creatureRepository->setModel(pcList);
     inner->addWidget(creatureRepository);

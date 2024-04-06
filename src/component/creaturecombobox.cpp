@@ -1,15 +1,12 @@
-#include "creaturecombobox.h"
-#include <dracula.h>
+#include <creaturecombobox.hpp>
 
 CreatureComboBox::CreatureComboBox(QWidget *parent)
-    : QComboBox(parent)
+    : CComboBox(parent)
 {
     connect(lineEdit(), &QLineEdit::editingFinished,
             this, [&] () { emit currentTextSaved(currentText()); });
-    connect(this, QOverload<int>::of(&QComboBox::currentIndexChanged),
+    connect(this, QOverload<int>::of(&CComboBox::currentIndexChanged),
             this, [&] (int index) { Q_UNUSED(index) emit currentTextSaved(currentText()); });
-
-    setStyleSheet();
     
 }
 

@@ -1,5 +1,4 @@
-#ifndef EFFECTREPOSITORY_H
-#define EFFECTREPOSITORY_H
+#pragma once
 
 #include <QListView>
 
@@ -17,5 +16,3 @@ private:
     // Add any private member functions or variables here
 
 };
-
-#endif // EFFECTREPOSITORY_H

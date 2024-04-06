@@ -1,4 +1,4 @@
-#include "creaturemodel.h"
+#include "include/creaturemodel.hpp"
 #include <QBrush>
 #include <QColor>
 #include <QFont>

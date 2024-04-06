@@ -1,5 +1,4 @@
-#ifndef CREATUREREPOSITORY_H
-#define CREATUREREPOSITORY_H
+#pragma once
 
 #include <QListView>
 
@@ -15,5 +14,3 @@ private:
     // Add any private member variables or functions here
 
 };
-
-#endif // CREATUREREPOSITORY_H

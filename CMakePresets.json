@@ -5,7 +5,7 @@
             "name": "make",
             "displayName": "Configure preset using toolchain file",
             "description": "Sets Makefile generator, build and install directory",
-            "generator": "Makefile",
+            "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",

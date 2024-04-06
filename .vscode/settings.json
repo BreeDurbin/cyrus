@@ -75,7 +75,11 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "qlistview": "cpp",
+        "qgroupbox": "cpp",
+        "qlabel": "cpp",
+        "qtabwidget": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
