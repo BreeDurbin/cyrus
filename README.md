@@ -1,4 +1,4 @@
-![Debian Build]([https://github.com/github/docs/actions/workflows/main.yml/badge.svg](https://github.com/BreeDurbin/cyrus/blob/main/.github/workflows/cmake-single-platform.yml))
+![Debian Build](https://github.com/BreeDurbin/cyrus/blob/main/.github/workflows/cmake-single-platform.yml)
 
 ```
  ██████╗██╗   ██╗██████╗ ██╗   ██╗███████╗
