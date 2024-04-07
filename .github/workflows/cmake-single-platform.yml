@@ -26,11 +26,11 @@ jobs:
       uses: WillBrennan/yaqti@2021.07.27.1
       with:
           version: '6.7.0'
-          host: 'linux'
+          os: 'linux'
           target: 'desktop'
           output: '${{github.workspace}}/qt/'
-          --install-deps: 'true'
-          --set-env: 'true'
+          install-deps: 'true'
+          set-env: 'true'
 
 
     - name: Configure CMake
