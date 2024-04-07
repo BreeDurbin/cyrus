@@ -1,2 +1,0 @@
-add_subdirectory(function_ref)
-add_subdirectory(is_virtual_base_of)

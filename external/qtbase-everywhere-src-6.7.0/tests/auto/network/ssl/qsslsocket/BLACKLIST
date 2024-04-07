@@ -1,6 +1,0 @@
-[deprecatedProtocols]
-windows
-[connectToHostEncrypted]
-macos
-[connectToHostEncryptedWithVerificationPeerName]
-macos
