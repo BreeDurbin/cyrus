@@ -1,3 +1,5 @@
+![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+
 ```
  ██████╗██╗   ██╗██████╗ ██╗   ██╗███████╗
 ██╔════╝╚██╗ ██╔╝██╔══██╗██║   ██║██╔════╝
@@ -7,10 +9,9 @@
  ╚═════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
 ```
 
- 
-A simple initiative tracker for d&amp;d and other ttrpgs
+A combat and world tracker for ttrpgs.
 
-
+Track initiative easy, create encounters before you session so you can jsut add them to the combat and have all your monsters roll initiative automatically. Initiative sorts itself. 
 
 Dependencies:
 ```
