@@ -22,8 +22,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install Qt
-      uses: WillBrennan/yaqti
+    - name: Install Qt5/Qt6 (yaqti)
+      uses: WillBrennan/yaqti@2021.07.27.1
       with:
           version: '6.7.0'
           host: 'linux'
