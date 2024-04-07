@@ -1,4 +1,5 @@
-![Debian Build](https://github.com/BreeDurbin/cyrus/blob/main/.github/workflows/badge.svg?event=push)
+![Debian Build Status](https://img.shields.io/github/actions/workflow/status/BreeDurbin/cyrus/cmake-single-platform.yml)
+
 
 ```
  ██████╗██╗   ██╗██████╗ ██╗   ██╗███████╗
