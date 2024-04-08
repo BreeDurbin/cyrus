@@ -1,14 +1,9 @@
 ![Debian Build Status](https://img.shields.io/github/actions/workflow/status/BreeDurbin/cyrus/cmake-single-platform.yml)
 
 
-```
- ██████╗██╗   ██╗██████╗ ██╗   ██╗███████╗
-██╔════╝╚██╗ ██╔╝██╔══██╗██║   ██║██╔════╝
-██║      ╚████╔╝ ██████╔╝██║   ██║███████╗
-██║       ╚██╔╝  ██╔══██╗██║   ██║╚════██║
-╚██████╗   ██║   ██║  ██║╚██████╔╝███████║
- ╚═════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-```
+
+![alt text](./docs/image/CYRUS_BANNER.png)
+
 
 A combat and world tracker for ttrpgs.
 
