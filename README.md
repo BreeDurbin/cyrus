@@ -1,4 +1,4 @@
-![Debian Build Status](https://img.shields.io/github/actions/workflow/status/BreeDurbin/cyrus/cmake-single-platform.yml)
+![Debian Build Status](https://img.shields.io/github/actions/workflow/status/BreeDurbin/cyrus/cmake-single-platform.yml?style=flat-square&logo=ubuntu&label=Ubuntu%20Build&color=#E95420)
 
 
 
