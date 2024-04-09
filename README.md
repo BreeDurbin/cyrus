@@ -1,4 +1,7 @@
 ![Debian Build Status](https://img.shields.io/github/actions/workflow/status/BreeDurbin/cyrus/cmake-single-platform.yml?style=flat-square&logo=ubuntu&label=Ubuntu%20Build&color=#E95420)
+![GPL License]([https://img.shields.io/license/github/BreeDurbin/cyrus](https://img.shields.io/github/license/BreeDurbin/cyrus?style=flat-square&logo=gnu&label=License)
+https://img.shields.io/github//:user/:repo
+
 
 
 
