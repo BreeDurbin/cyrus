@@ -6,6 +6,7 @@
 
 static bool s_darkMode = true;
 
+QColor m_parchment(){ return QColor(254, 242, 200); }
 QColor m_lightGold(){ return QColor(197,157,98); }
 QColor m_gold(){ return QColor(255,215,0); }
 QColor m_darkGold(){ return QColor(184,134,11); }
@@ -51,17 +52,17 @@ QColor ColorRepository::baseBackground()
 
 QColor ColorRepository::text()
 {
-    return m_lightGold();
+    return m_parchment();
 }
 
 QColor ColorRepository::pressedTextColor()
 {
-    return m_darkGold();
+    return m_parchment();
 }
 
 QColor ColorRepository::hoverTextColor()
 {
-    return m_gold();
+    return m_parchment();
 }
 
 QColor ColorRepository::pressedOutlineColor()
