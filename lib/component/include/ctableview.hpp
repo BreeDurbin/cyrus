@@ -2,13 +2,13 @@
 
 #include <QTableView>
 
-class CreatureRepository : public QTableView
+class CTableView : public QTableView
 {
     Q_OBJECT
 
 public:
-    explicit CreatureRepository(QWidget *parent = nullptr);
-    ~CreatureRepository();
+    explicit CTableView(const QString text = "", QWidget *parent = nullptr);
+    ~CTableView();
 
 private:
     // Add any private member variables or functions here

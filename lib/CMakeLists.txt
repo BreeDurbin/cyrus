@@ -16,9 +16,10 @@ set(HEADER_FILES
     #component
     ${CMAKE_CURRENT_SOURCE_DIR}/component/include/cpushbutton.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/include/ccombobox.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/component/include/clistview.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/component/include/ctableview.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/include/ctabwidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/include/clabel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/component/include/cstyleditemdelegate.hpp
     #style
     ${CMAKE_CURRENT_SOURCE_DIR}/style/include/colorrepository.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/style/include/cstyle.hpp
@@ -31,9 +32,10 @@ set(SOURCE_FILES
     #component
     ${CMAKE_CURRENT_SOURCE_DIR}/component/cpushbutton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/ccombobox.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/component/clistview.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/component/ctableview.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/ctabwidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/component/clabel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/component/cstyleditemdelegate.cpp
     #style
     ${CMAKE_CURRENT_SOURCE_DIR}/style/colorrepository.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/style/cstyle.cpp

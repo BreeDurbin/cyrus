@@ -3,6 +3,7 @@
 #include <QColor>
 #include <QFont>
 #include <QIcon>
+#include "colorrepository.hpp"
 
 
 CreatureModel::CreatureModel(QObject *parent){
@@ -36,6 +37,10 @@ int CreatureModel::rowCount(const QModelIndex &parent) const{
     return !parent.isValid() ? creatures.size() : 0;
 }
 
+int CreatureModel::columnCount(const QModelIndex &parent) const{
+    return !parent.isValid() ? 4 : 0;
+}
+
 QVariant CreatureModel::data(const QModelIndex &index, int role) const{
     if (!index.isValid())
         return QVariant();
@@ -44,17 +49,44 @@ QVariant CreatureModel::data(const QModelIndex &index, int role) const{
         case Qt::TextAlignmentRole:
             return Qt::AlignCenter;
         case Qt::FontRole:
-            return QFont("Helvetica", 16, QFont::Bold);
+            return QFont("Helvetica", 20, QFont::Bold);
         case Qt::BackgroundRole:
-            return QBrush(QColor(60, 60, 60));
+            return QBrush(ColorRepository::baseBackground());
         case Qt::ForegroundRole:    
-            return QBrush(QColor(255, 255, 255));
+            return QBrush(ColorRepository::text());
         case Qt::DecorationRole:
-            return QIcon(":/icons/monster.png");
+            if(index.column() == 0)
+                return QVariant();
+            else if(index.column() == 1)
+                return QIcon(":/icons/monster.png");
+            else if(index.column() == 2)
+                return QVariant();
+            else if(index.column() == 3)
+                return QIcon(":/icons/initiative.png");
+            else 
+                return QVariant();
         case Qt::DisplayRole:
-            return QString(creatures[index.row()].name + " " + creatures[index.row()].type + " " + QString::number(creatures[index.row()].level) + " " + QString::number(creatures[index.row()].initiative));
+            if(index.column() == 0)
+                return QString(creatures[index.row()].name);
+            else if(index.column() == 1)
+                return QString(creatures[index.row()].type);
+            else if(index.column() == 2)
+                return QString::number(creatures[index.row()].level);
+            else if(index.column() == 3)
+                return QString::number(creatures[index.row()].initiative);
+            else 
+                return QVariant();
         case Qt::EditRole:
-            return QString(creatures[index.row()].name + " " + creatures[index.row()].type + " " + QString::number(creatures[index.row()].level) + " " + QString::number(creatures[index.row()].initiative));
+            if(index.column() == 0)
+                return QString(creatures[index.row()].name);
+            else if(index.column() == 1)
+                return QString(creatures[index.row()].type);
+            else if(index.column() == 2)
+                return QString::number(creatures[index.row()].level);
+            else if(index.column() == 3)
+                return QString::number(creatures[index.row()].initiative);
+            else 
+                return QVariant();
         default:
             return QVariant();
     }
@@ -86,7 +118,7 @@ bool CreatureModel::setData(const QModelIndex &index, const QVariant &value, int
 }
 
 Qt::ItemFlags CreatureModel::flags(const QModelIndex &index) const{
-    return index.isValid() ? Qt::ItemIsEditable | QAbstractListModel::flags(index) : Qt::NoItemFlags;
+    return index.isValid() ? Qt::ItemIsEditable | QAbstractTableModel::flags(index) : Qt::NoItemFlags;
 }
 
 void CreatureModel::addRows(CreatureItem &creatureItem, const QModelIndex &parent){

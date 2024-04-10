@@ -9,9 +9,10 @@
 
 #include <clabel.hpp>
 #include <cpushbutton.hpp>
-#include <clistview.hpp>
+#include <ctableview.hpp>
 #include <creaturemodel.hpp>
 #include <ctabwidget.hpp>
+#include <cstyleditemdelegate.hpp>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -62,7 +63,9 @@ void MainWindow::initializeInitiative(QHBoxLayout* outer){
     auto banner = new CLabel("Initiative Tracker");
     inner->addWidget(banner);
 
-    CListView *initiativeRepository = new CListView();
+    auto *initiativeRepository = new CTableView();
+    auto itemDelegate = new CStyledItemDelegate();
+    initiativeRepository->setItemDelegate(itemDelegate);
     auto initiativeList = new CreatureModel();
     initiativeRepository->setModel(initiativeList);
     inner->addWidget(initiativeRepository);
@@ -92,17 +95,31 @@ void MainWindow::initializeCreatureRepository(QHBoxLayout* outer){
     auto banner = new CLabel("Character Repository");
     creatureRepositoryBannerLayout->addWidget(banner);
 
-    CPushButton *addPcButton = new CPushButton("Add Player Character");
-    creatureRepositoryBannerLayout->addWidget(addPcButton);
+    auto *addCreatureButton = new CPushButton("+");
+    creatureRepositoryBannerLayout->addWidget(addCreatureButton);
+    auto *removeCreatureButton = new CPushButton("-");
+    creatureRepositoryBannerLayout->addWidget(removeCreatureButton);
 
-    auto creatureRepository = new CListView();
+    auto creatureRepository = new CTableView();
+    auto itemDelegate = new CStyledItemDelegate();
+    creatureRepository->setItemDelegate(itemDelegate);
     auto pcList = new CreatureModel();
     creatureRepository->setModel(pcList);
     inner->addWidget(creatureRepository);
     creatureRepository->show();
 
     //connections
-    connect(addPcButton, &QPushButton::clicked, [pcList](){
+    connect(addCreatureButton, &QPushButton::clicked, [pcList](){
+        CreatureItem temp;
+        temp.name = "New PC";
+        temp.type = "PC";
+        temp.level = 1;
+        temp.initiative = 0;
+        pcList->addRows(temp);
+    });
+
+    //connections
+    connect(removeCreatureButton, &QPushButton::clicked, [pcList](){
         CreatureItem temp;
         temp.name = "New PC";
         temp.type = "PC";

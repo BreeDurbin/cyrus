@@ -23,5 +23,4 @@ namespace ColorRepository
     QColor buttonPressedBackground();
     QColor buttonHoveredBackground();
     QColor buttonBackground();
-
 }

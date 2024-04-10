@@ -1,4 +1,4 @@
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 
 
 struct CreatureItem // nested class
@@ -9,13 +9,14 @@ struct CreatureItem // nested class
     int initiative;
 };
 
-class CreatureModel : public QAbstractListModel{
+class CreatureModel : public QAbstractTableModel{
 
     Q_OBJECT
 
 public:
     CreatureModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
