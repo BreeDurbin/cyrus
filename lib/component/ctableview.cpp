@@ -5,12 +5,14 @@
 CTableView::CTableView(const QString text, QWidget *parent){
     this->viewport()->setAutoFillBackground(false);
     this->setAutoFillBackground(false);
-    this->setFrameStyle(QFrame::NoFrame);
+    //this->setFrameStyle(QFrame::NoFrame);
     this->horizontalHeader()->hide();
     this->verticalHeader()->hide();
     this->setShowGrid(false);
-    this->setColumnWidth(0, 200);
-
+    this->setSelectionBehavior(QAbstractItemView::SelectRows);
+    this->setViewportMargins(20, 20, 20, 20);
+    this->setContentsMargins(20, 20, 20, 20);
+    this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
 }
 
 CTableView::~CTableView(){};
