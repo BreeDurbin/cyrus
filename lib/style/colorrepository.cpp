@@ -6,6 +6,13 @@
 
 static bool s_darkMode = true;
 
+QColor m_lightGold(){ return QColor(197,157,98); }
+QColor m_gold(){ return QColor(255,215,0); }
+QColor m_darkGold(){ return QColor(184,134,11); }
+QColor m_lightBlue(){ return QColor(0,0,255); }
+QColor m_blue(){ return QColor(0,0,128); }
+QColor m_darkBlue(){ return QColor(11,35,59); }
+
 QPalette ColorRepository::standardPalette()
 {
     QPalette pal;
@@ -34,39 +41,37 @@ void ColorRepository::setDarkMode(bool dark)
 
 QColor ColorRepository::windowBackground()
 {
-    return s_darkMode ? QColor(235, 180, 15)
-                      : QColor(12, 51, 194);
+    return m_darkBlue();
 }
 
 QColor ColorRepository::baseBackground()
 {
-    return s_darkMode ? QColor(235, 180, 15)
-                      : QColor(12, 51, 194);
+    return m_darkBlue();
 }
 
 QColor ColorRepository::text()
 {
-    return s_darkMode ? QColor(0xa5, 0xa5, 0xa5) : QColor(0x25, 0x25, 0x25);
+    return m_lightGold();
 }
 
 QColor ColorRepository::pressedTextColor()
 {
-    return QColor(12, 51, 194);
+    return m_darkGold();
 }
 
 QColor ColorRepository::hoverTextColor()
 {
-    return QColor(235, 180, 15);
+    return m_gold();
 }
 
 QColor ColorRepository::pressedOutlineColor()
 {
-    return QColor(0x32, 0x2d, 0x35);
+    return m_darkGold();
 }
 
 QColor ColorRepository::buttonOutlineColor()
 {
-    return s_darkMode ? QColor(0xa5, 0xa5, 0xa5) : QColor(0x25, 0x25, 0x25);
+    return m_lightGold();
 }
 
 QBrush ColorRepository::hoverOutlineBrush(const QRect &rect)
@@ -91,7 +96,7 @@ QBrush ColorRepository::hoverOutlineBrush(const QRect &rect)
 
 QColor ColorRepository::buttonPressedBackground()
 {
-    return s_darkMode ? QColor(0x17, 0x17, 0x17) : QColor(0xf8, 0xf7, 0xf8);
+    return m_lightGold();
 }
 
 QColor ColorRepository::buttonHoveredBackground()
@@ -103,5 +108,5 @@ QColor ColorRepository::buttonHoveredBackground()
 
 QColor ColorRepository::buttonBackground()
 {
-    return s_darkMode ? QColor(0x21, 0x1f, 0x22, 0xa7) : QColor(0xf5, 0xf4, 0xf5) /* TODO with opacity = ? */;
+    return m_darkBlue();
 }
