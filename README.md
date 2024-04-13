@@ -9,7 +9,7 @@
 
 A combat and world tracker for ttrpgs.
 
-Track initiative easy, create encounters before you session so you can jsut add them to the combat and have all your monsters roll initiative automatically. Initiative sorts itself. 
+Track initiative easy, create encounters before you session so you can just add them to the combat and have all your monsters roll initiative automatically. Add new monsters/players to the combat witha  single button. Handle delayed actions in combat by dragging and dropping. Initiative sorts itself. 
 
 Dependencies:
 ```
