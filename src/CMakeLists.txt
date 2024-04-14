@@ -15,6 +15,7 @@ qt_standard_project_setup()
 set(HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/mainwindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/model/include/creaturemodel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mainwindow.ui
 )
 
 set(SOURCE_FILES
@@ -23,6 +24,12 @@ set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/model/creaturemodel.cpp
 )
 
+set(RESOURCE_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/graphics.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources.qrc
+)
+
+
 add_executable(
     ${PROJECT_NAME}
     #headers
@@ -30,7 +37,7 @@ add_executable(
     #sources
     ${SOURCE_FILES}
     #resources
-    ${CMAKE_CURRENT_SOURCE_DIR}/resources.qrc
+    ${RESOURCE_FILES}
 )
 
 target_include_directories(
