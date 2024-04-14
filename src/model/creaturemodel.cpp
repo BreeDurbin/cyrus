@@ -87,6 +87,8 @@ QVariant CreatureModel::data(const QModelIndex &index, int role) const{
                 return QString::number(creatures[index.row()].initiative);
             else 
                 return QVariant();
+        case Qt::SizeHintRole:
+            return QSize(1300, 50);
         default:
             return QVariant();
     }
@@ -101,6 +103,7 @@ QHash<int, QByteArray> CreatureModel::roleNames() const{
     roles[Qt::DecorationRole] = "decoration";
     roles[Qt::DisplayRole] = "display";
     roles[Qt::EditRole] = "edit";
+    roles[Qt::SizeHintRole] = "sizeHint";
     return roles;
 }
 

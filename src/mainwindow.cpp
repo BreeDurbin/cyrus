@@ -14,8 +14,12 @@
 #include <ctabwidget.hpp>
 #include <cstyleditemdelegate.hpp>
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+#include "ui_mainwindow.h"
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
+    ui->setupUi(this);
+
     //title and size
     this->setWindowTitle("Cyrus: Combat Tracker");
     this->setMinimumSize(1920, 1080);
@@ -23,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     setStyleSheet("#MainWindow { border-image: url(:/images/cyrus_background.png) 0 0 0 0 stretch stretch;}");
 
+
+
+    /*
     setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
     //setBackgroundRole(QPalette::Background);
 
@@ -47,11 +54,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     initializeCreatureRepository(outer);
 
     // final show call
-    this->centralWidget()->show();
+    this->centralWidget()->show(); */
 }
 
 MainWindow::~MainWindow()
 {
+    delete ui;
 }
 
 void MainWindow::initializeInitiative(QHBoxLayout* outer){
