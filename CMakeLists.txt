@@ -12,5 +12,4 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-add_subdirectory(lib)
 add_subdirectory(src)

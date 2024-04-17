@@ -79,7 +79,9 @@
         "qlistview": "cpp",
         "qgroupbox": "cpp",
         "qlabel": "cpp",
-        "qtabwidget": "cpp"
+        "qtabwidget": "cpp",
+        "qdialog": "cpp",
+        "qwidget": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
