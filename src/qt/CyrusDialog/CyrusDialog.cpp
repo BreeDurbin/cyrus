@@ -55,7 +55,9 @@ CyrusDialog::~CyrusDialog()
 
 void CyrusDialog::addCombatPage()
 {
-    ui->tabWidget->addTab(new CombatPage(), "Combat");
+    auto combatPage = new CombatPage();
+    combatPage->setAutoFillBackground(false);
+    ui->tabWidget->addTab(combatPage, "Combat");
 }
 
 

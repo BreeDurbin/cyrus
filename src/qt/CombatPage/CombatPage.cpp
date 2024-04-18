@@ -6,6 +6,8 @@ CombatPage::CombatPage(QWidget *parent) :
     ui(new Ui::CombatPage)
 {
     ui->setupUi(this);
+    ui->encounterListView->viewport()->setAutoFillBackground(false);
+    ui->initiativeListView->viewport()->setAutoFillBackground(false);
 }
 
 CombatPage::~CombatPage()

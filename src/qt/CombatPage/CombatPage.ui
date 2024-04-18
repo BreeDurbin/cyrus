@@ -74,6 +74,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -174,6 +177,9 @@
          <width>80</width>
          <height>80</height>
         </size>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -283,6 +289,9 @@
          <bold>false</bold>
         </font>
        </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Round</string>
        </property>
@@ -305,6 +314,9 @@
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
          </property>
          <property name="text">
           <string>-</string>
@@ -408,6 +420,9 @@
          <width>300</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
