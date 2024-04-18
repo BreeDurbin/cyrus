@@ -6,6 +6,7 @@ SettingsPage::SettingsPage(QWidget *parent) :
     ui(new Ui::SettingsPage)
 {
     ui->setupUi(this);
+    this->setAutoFillBackground(false);
 }
 
 SettingsPage::~SettingsPage()

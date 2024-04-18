@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2061</width>
-    <height>1135</height>
+    <width>1298</width>
+    <height>1060</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,37 +31,46 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="hero">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="QLabel" name="label">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="autoFillBackground">
-       <bool>true</bool>
+      <property name="minimumSize">
+       <size>
+        <width>1280</width>
+        <height>120</height>
+       </size>
       </property>
       <property name="text">
        <string/>
       </property>
       <property name="pixmap">
-       <pixmap resource="../asset/image.qrc">:/image/CYRUS_HERO.png</pixmap>
+       <pixmap resource="../asset/icon.qrc">:/image/CYRUS_HERO.png</pixmap>
       </property>
       <property name="scaledContents">
        <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignJustify|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>1280</width>
+        <height>720</height>
+       </size>
       </property>
       <property name="tabPosition">
        <enum>QTabWidget::West</enum>
@@ -71,6 +80,9 @@
       </property>
       <property name="currentIndex">
        <number>-1</number>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
