@@ -6,6 +6,7 @@
 #include "../CreaturePage/CreaturePage.h"
 #include "../SettingsPage/SettingsPage.h"
 #include "../WorldPage/WorldPage.h"
+#include "../HistoryPage/HistoryPage.h"
 
 #include <iostream>
 
@@ -24,50 +25,30 @@
 
 CyrusDialog::CyrusDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::CyrusDialog)
 {
+    Q_INIT_RESOURCE(icon);
+    Q_INIT_RESOURCE(image);
+
     ui->setupUi(this);
 
     //title and size
-    this->setWindowTitle("Cyrus: Combat Tracker");
+    this->setWindowTitle("Cyrus");
 
-    setStyleSheet("#MainWindow { border-image: url(:/images/cyrus_background.png) 0 0 0 0 stretch stretch;}");
+    setStyleSheet("#CyrusDialog { border-image: url(:/image/cyrus_background.png) 0 0 0 0 stretch stretch;}");
 
     //tab setup
     addCombatPage();
     addCreaturePage();
     addWorldPage();
+    addHistoryPage();
     addCampaignPage();
     addSettingsPage();
-
-    /*
-    setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
-    //setBackgroundRole(QPalette::Background);
-
-    // core layout
-    QHBoxLayout *outer = new QHBoxLayout();
-
-    //tab setup
-    CTabWidget *tabs = new CTabWidget();
-    tabs->setDocumentMode(true);
-    auto combatTab = new QWidget();
-    combatTab->setAutoFillBackground(false);
-    combatTab->setLayout(outer);
-    tabs->addTab(combatTab, "Combat");
-    tabs->addTab(new QWidget(), "Bestiary");
-    tabs->addTab(new QWidget(), "World");
-    tabs->addTab(new QWidget(), "Settings");
-
-    setCentralWidget(tabs);
-
-    // initialization calls
-    initializeInitiative(outer);
-    initializeCreatureRepository(outer);
-
-    // final show call
-    this->centralWidget()->show(); */
+    
 }
 
 CyrusDialog::~CyrusDialog()
 {
+    Q_CLEANUP_RESOURCE(icon);
+    Q_CLEANUP_RESOURCE(image);
     delete ui;
 }
 
@@ -89,10 +70,14 @@ void CyrusDialog::addWorldPage()
     ui->tabWidget->addTab(new WorldPage(), "World");
 }
 
+void CyrusDialog::addHistoryPage()
+{
+    ui->tabWidget->addTab(new HistoryPage(), "History");
+}
 
 void CyrusDialog::addCampaignPage()
 {
-    ui->tabWidget->addTab(new CombatPage(), "Campaign");
+    ui->tabWidget->addTab(new CampaignPage(), "Campaign");
 }
 
 

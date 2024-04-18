@@ -18,6 +18,7 @@ private:
     void addCombatPage();
     void addCreaturePage();
     void addWorldPage();
+    void addHistoryPage();
     void addCampaignPage();
     void addSettingsPage();
     void initializeInitiative(QHBoxLayout* layout);

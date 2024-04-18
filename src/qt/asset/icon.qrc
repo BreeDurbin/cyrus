@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="/">
+    <file>image/cyrus_background.png</file>
+    <file>image/CYRUS_HERO.png</file>
+    <file>image/CYRUS_BANNER.png</file>
+    <file>image/CYRUS_BANNER_TINY.png</file>
+    <file>image/CYRUS_ICON_TINY.png</file>
+    <file>image/Designer.png</file>
+    <file>image/logo_big.png</file>
+  </qresource>
+</RCC>
