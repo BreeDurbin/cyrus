@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1600</width>
-    <height>1080</height>
+    <width>720</width>
+    <height>720</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Cyrus</string>
@@ -17,14 +23,26 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
       <x>-10</x>
       <y>70</y>
-      <width>1631</width>
+      <width>1200</width>
       <height>1091</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
     <property name="tabPosition">
      <enum>QTabWidget::West</enum>
@@ -48,11 +66,17 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="./asset/graphics.qrc">:/images/CYRUS_HERO.png</pixmap>
+        <pixmap resource="../asset/graphics.qrc">:/images/CYRUS_HERO.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -64,7 +88,7 @@
   </widget>
  </widget>
  <resources>
-  <include location="./asset/graphics.qrc"/>
+  <include location="../asset/graphics.qrc"/>
  </resources>
  <connections/>
 </ui>
