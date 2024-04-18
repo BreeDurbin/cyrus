@@ -28,9 +28,6 @@ CyrusDialog::CyrusDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::Cyru
 
     //title and size
     this->setWindowTitle("Cyrus: Combat Tracker");
-    this->setMinimumSize(1920, 1080);
-    this->setObjectName("Cyrus");
-    this->setWindowIcon(QIcon(":/images/cyrus_icon.png"));
 
     setStyleSheet("#MainWindow { border-image: url(:/images/cyrus_background.png) 0 0 0 0 stretch stretch;}");
 
