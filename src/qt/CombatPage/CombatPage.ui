@@ -61,7 +61,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QListView" name="initiativeListView">
+      <widget class="QTableView" name="initiativeTableView">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -407,7 +407,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QListView" name="encounterListView">
+      <widget class="QTableView" name="encounterTableView">
        <property name="sizePolicy">
         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
          <horstretch>0</horstretch>

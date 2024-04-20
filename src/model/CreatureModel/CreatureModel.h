@@ -1,15 +1,8 @@
 #include <QAbstractTableModel>
 
+class Creature;
 
-struct CreatureItem // nested class
-{
-    QString name;
-    QString type;
-    int level;
-    int initiative;
-};
-
-class CreatureModel : public QAbstractListModel{
+class CreatureModel : public QAbstractTableModel{
 
     Q_OBJECT
 
@@ -21,11 +14,11 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
-    void addRows(CreatureItem &item, const QModelIndex &parent = QModelIndex());
+    void addRows(Creature &item, const QModelIndex &parent = QModelIndex());
     void sort();
     void nextRow();
-    std::vector<CreatureItem> getCreatures();
-    void addCreatures(std::vector<CreatureItem> &creatures);
+    std::vector<Creature> getCreatures();
+    void addCreatures(std::vector<Creature> &creatures);
 
     signals:
     void newRound(int roundCounter);
@@ -37,5 +30,5 @@ public:
 private:
     int currentRow;
     int roundCounter;
-    std::vector<CreatureItem> creatures;
+    std::vector<Creature> creatures;
 };

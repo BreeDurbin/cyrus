@@ -81,7 +81,10 @@
         "qlabel": "cpp",
         "qtabwidget": "cpp",
         "qdialog": "cpp",
-        "qwidget": "cpp"
+        "qwidget": "cpp",
+        "qstyleditemdelegate": "cpp",
+        "qhboxlayout": "cpp",
+        "expected": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
