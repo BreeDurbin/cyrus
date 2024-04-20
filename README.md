@@ -32,7 +32,7 @@ make
 
 Preview:
 ```
-./docs/screenshots/preview_0.0.0.png
+![preview](./docs/screenshots/preview_0.0.0.png)
 ```
 
 
