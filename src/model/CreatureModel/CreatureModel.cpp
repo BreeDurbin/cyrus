@@ -136,7 +136,7 @@ void CreatureModel::newCombat(){
 
 std::vector<CreatureItem> CreatureModel::getCreatures(){
     return creatures;
-}a
+}
 
 void CreatureModel::addCreatures(std::vector<CreatureItem> &creatures){
     this->creatures = creatures;
