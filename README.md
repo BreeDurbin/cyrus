@@ -31,9 +31,8 @@ make
 ```
 
 Preview:
-```
 ![preview](./docs/screenshots/preview_0.0.0.png)
-```
+
 
 
 ## Contributors
