@@ -21,8 +21,6 @@ private:
     void addHistoryPage();
     void addCampaignPage();
     void addSettingsPage();
-    void initializeInitiative(QHBoxLayout* layout);
-    void initializeCreatureRepository(QHBoxLayout* layout);
 
 protected:
     Ui::CyrusDialog *ui;
