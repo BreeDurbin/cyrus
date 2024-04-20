@@ -1,6 +1,20 @@
 <RCC>
   <qresource prefix="/">
-    <file>icon/monster.png</file>
-    <file>icon/initiative.png</file>
+    <file>image/cyrus_background.png</file>
+    <file>image/CYRUS_HERO.png</file>
+    <file>image/CYRUS_BANNER.png</file>
+    <file>image/CYRUS_BANNER_TINY.png</file>
+    <file>image/CYRUS_ICON_TINY.png</file>
+    <file>image/Designer.png</file>
+    <file>image/logo_big.png</file>
+    <file>image/background1.png</file>
+    <file>image/background2.png</file>
+    <file>image/background3.png</file>
+    <file>image/background4.png</file>
+    <file>image/background5.png</file>
+    <file>image/background6.png</file>
+    <file>image/background7.png</file>
+    <file>image/background8.png</file>
+    <file>image/background9.png</file>
   </qresource>
 </RCC>

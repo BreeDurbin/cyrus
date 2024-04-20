@@ -29,7 +29,7 @@ CyrusDialog::CyrusDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::Cyru
     //title and size
     this->setWindowTitle("Cyrus");
 
-    setStyleSheet("#CyrusDialog { border-image: url(:/image/cyrus_background.png) 0 0 0 0 stretch stretch;}");
+    setStyleSheet("#CyrusDialog { border-image: url(:/image/background4.png) 0 0 0 0 stretch fixed;}");
 
     //database setup
     Database *db = new Database(this);
