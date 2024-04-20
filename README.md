@@ -33,7 +33,7 @@ make
 
 ## Contributors
 
-If you want to contribute to cyrus, please read our [contribution guidelines](CONTRIBUTING.md).
+If you want to contribute to cyrus, please read the [contribution guidelines](CONTRIBUTING.md).
 
 Thanks goes to these wonderful people:
 
