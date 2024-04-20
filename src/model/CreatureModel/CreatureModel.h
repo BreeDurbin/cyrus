@@ -9,7 +9,7 @@ struct CreatureItem // nested class
     int initiative;
 };
 
-class CreatureModel : public QAbstractTableModel{
+class CreatureModel : public QAbstractListModel{
 
     Q_OBJECT
 
@@ -23,8 +23,19 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     void addRows(CreatureItem &item, const QModelIndex &parent = QModelIndex());
     void sort();
+    void nextRow();
+    std::vector<CreatureItem> getCreatures();
+    void addCreatures(std::vector<CreatureItem> &creatures);
+
+    signals:
+    void newRound(int roundCounter);
+
+    public slots:
+    void newCombat();
 
 
 private:
+    int currentRow;
+    int roundCounter;
     std::vector<CreatureItem> creatures;
 };

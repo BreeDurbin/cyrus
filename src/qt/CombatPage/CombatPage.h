@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QListView>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CombatPage; }
@@ -14,7 +15,10 @@ class CombatPage : public QWidget
 public:
     explicit CombatPage(QWidget *parent = nullptr);
     ~CombatPage();
+    void initializeInitiative();
+    void initializeEncounter();
 
 private:
     Ui::CombatPage *ui;
+
 };
