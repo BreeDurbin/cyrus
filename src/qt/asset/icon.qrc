@@ -1,6 +1,15 @@
 <RCC>
   <qresource prefix="/">
-    <file>icon/monster.png</file>
-    <file>icon/initiative.png</file>
+    <file>icon/class/Barb_Symbol.png</file>
+    <file>icon/class/Cleric_Symbol.png</file>
+    <file>icon/class/Druid_Symbol.png</file>
+    <file>icon/class/Fighter_Symbol.png</file>
+    <file>icon/class/Monster_Symbol.png</file>
+    <file>icon/class/Paladin_Symbol.png</file>
+    <file>icon/class/Wizard_Symbol.png</file>
+    <file>icon/action/attack_icon.png</file>
+    <file>icon/action/cast_icon.png</file>
+    <file>icon/ui/save_icon.png</file>
+    <file>icon/ui/load_icon.png</file>
   </qresource>
 </RCC>

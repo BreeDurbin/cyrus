@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/**",
-                "/opt/qskinny/include/**"
+                "/opt/qskinny/include/**", 
+                "/usr/include/qt6/**"
             ],
             "defines": [],
             "cStandard": "c17",
