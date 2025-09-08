@@ -2,7 +2,7 @@
 
 #include <QIcon>
 #include <QHash>
-#include "../helper/Enums.h"
+#include "shared/Enums.h"
 
 namespace IconRepository {
 

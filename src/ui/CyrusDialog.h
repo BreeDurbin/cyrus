@@ -3,10 +3,10 @@
 #include <QMainWindow>
 #include <QItemSelectionModel>
 #include <QAbstractItemModel>
-#include "../model/CharacterModel.h"
-#include "../model/InitiativeDelegate.h"
-#include "../model/CombatLogDelegate.h"
-#include "../view/InitiativeView.h"
+#include "model/CharacterModel.h"
+#include "model/InitiativeDelegate.h"
+#include "model/CombatLogDelegate.h"
+#include "view/InitiativeView.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CyrusDialog; }

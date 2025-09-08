@@ -6,14 +6,12 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QCursor>
-#include "../style/ColorRepository.h"
-#include "../style/StyleRepository.h"
+#include "style/ColorRepository.h"
+#include "style/StyleRepository.h"
 #include "CharacterModel.h"
-#include "../helper/RectBuilder.h"
+#include "InitiativeDelegate.h"
 
 #include<iostream>
-
-using namespace RectBuilder;
 
 CombatLogDelegate::CombatLogDelegate(QObject *parent)
     : QStyledItemDelegate(parent) {}

@@ -1,14 +1,14 @@
 #include "CyrusDialog.h"
 #include "ui_CyrusDialog.h"
-#include "../style/StyleRepository.h"
+#include "style/StyleRepository.h"
 #include <iostream>
 #include <QStringList>
 #include <QGroupBox>
 #include <QTextEdit>
 #include <QStringListModel>
 #include <QHBoxLayout>
-#include "../helper/TomlHelper.h"
-#include "../helper/Enums.h"
+#include "TomlHelper.h"
+#include "shared/Enums.h"
 #include <QVector>
 #include <QShortcut>
 

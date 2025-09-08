@@ -4,8 +4,8 @@
 #include <QVariant>
 #include <initializer_list>
 #include <QIcon>
-#include "../helper/Enums.h"
-#include "../style/IconRepository.h"
+#include "shared/Enums.h"
+#include "style/IconRepository.h"
 #include <QUuid>
 
 class Character

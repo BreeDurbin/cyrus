@@ -4,7 +4,7 @@
 #include <QVector>
 #include <memory>
 #include "Character.h"
-#include "../helper/Enums.h"
+#include "shared/Enums.h"
 
 class CharacterModel : public QAbstractListModel
 {
