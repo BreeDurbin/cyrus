@@ -14,6 +14,7 @@ public:
     QModelIndex activeIndex() const;
     QStyleOptionViewItem makeViewOptions() const;
     void refreshIndex(const QModelIndex& index);
+    bool editCustom(const QModelIndex& index);
 
 
 protected:

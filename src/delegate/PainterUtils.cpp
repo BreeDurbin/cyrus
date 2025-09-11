@@ -1,10 +1,10 @@
 #include "PainterUtils.h"
-#include "style/ColorRepository.h"
-#include "style/StyleRepository.h"
+#include "ColorRepository.h"
+#include "StyleRepository.h"
 
 namespace PainterUtils {
 
-void drawStepper(QPainter* painter, const StepperRects& s, int value) {
+void paintStepper(QPainter* painter, const InitiativeLayout::StepperRects& s, int value) {
     painter->setPen(QPen(ColorRepository::buttonOutlineColor(), 1.0));
     painter->setBrush(ColorRepository::buttonBackground());
     painter->drawRoundedRect(s.minusRect, 4, 4);
@@ -24,7 +24,7 @@ void drawStepper(QPainter* painter, const StepperRects& s, int value) {
     painter->drawText(s.plusRect, Qt::AlignCenter, "+");
 }
 
-void InitiativeDelegate::paintDeleteButton(QPainter* painter, const QRect& rect, bool hovered) const {
+void paintDeleteButton(QPainter* painter, const QRect& rect, bool hovered) {
     const QColor fill = hovered
         ? ColorRepository::buttonHoveredBackground()
         : ColorRepository::buttonBackground();
@@ -38,8 +38,8 @@ void InitiativeDelegate::paintDeleteButton(QPainter* painter, const QRect& rect,
     painter->drawText(rect, Qt::AlignCenter, "X");
 }
 
-void InitiativeDelegate::paintActionIcon(QPainter* painter, const QIcon& icon, const QRect& rect,
-                                         bool selected, bool hovered, int iconSize) const {
+void paintActionIcon(QPainter* painter, const QIcon& icon, const QRect& rect,
+                                         bool selected, bool hovered, int iconSize) {
     if (selected || hovered) {
         QColor glowColor = ColorRepository::buttonHoveredBackground();
         QRadialGradient glow(rect.center(), iconSize * 1.6);
@@ -55,9 +55,8 @@ void InitiativeDelegate::paintActionIcon(QPainter* painter, const QIcon& icon, c
     icon.paint(painter, rect, Qt::AlignCenter, QIcon::Normal, QIcon::On);
 }   
 
-
-void drawAttackDropdown(QPainter* painter, const QRect& dropdownRect,
-                        const LayoutSpec& spec) {
+void paintAttackDropdown(QPainter* painter, const QRect& dropdownRect,
+                        const Character::LayoutSpec& spec) {
     const int h = dropdownRect.height();
     const int y = dropdownRect.top() + (h - 24) / 2;
 
@@ -77,40 +76,39 @@ void drawAttackDropdown(QPainter* painter, const QRect& dropdownRect,
     painter->drawText(okRect, Qt::AlignCenter, "OK");
 }
 
-void drawCastDropdown(QPainter* painter, const Character& character,
-                      const InitiativeRects& rects,
-                      const std::unordered_map<QUuid, CastState>& castState) {
-    painter->setFont(StyleRepository::labelFont(14, false));
+void paintCastDropdown(QPainter* painter, const Character& character,
+                      const InitiativeLayout::InitiativeRects& rects,
+                      const CastState& castState) {
+    painter->setFont(StyleRepository::labelFont(10, false));
+
+    // Labels
     painter->setPen(ColorRepository::text());
     painter->drawText(rects.cast.castingTimeLabel, Qt::AlignVCenter | Qt::AlignLeft, "Speed");
     painter->drawText(rects.cast.durationLabel,    Qt::AlignVCenter | Qt::AlignLeft, "Dur");
 
-    // Spell edit
+    // Spell edit box
     painter->setPen(QPen(ColorRepository::buttonOutlineColor(), 1.0));
-    painter->setBrush(Qt::white);
+    painter->setBrush(ColorRepository::baseBackground());
     painter->drawRoundedRect(rects.cast.spellEdit, 6, 6);
 
-    painter->setPen(Qt::black);
-    auto it = castState.find(character.uuid());
-    const QString spellText = (it != castState.end() && !it->second.spellName.isEmpty())
-                                ? it->second.spellName
-                                : QStringLiteral("Spell name…");
-    painter->drawText(rects.cast.spellEdit.adjusted(6, 0, -6, 0),
+    painter->setPen(castState.isDefaulted() ? ColorRepository::placeholderText() : ColorRepository::text());
+    const QString spellText = castState.isDefaulted() ? castState.defaultText : castState.spellName;
+    painter->drawText(rects.cast.spellEdit.adjusted(11, 2, -6, 0),
                       Qt::AlignVCenter | Qt::AlignLeft, spellText);
 
-    // Steppers
-    const int castingTimeValue = it != castState.end() ? it->second.castingTime : 1;
-    const int durationValue    = it != castState.end() ? it->second.duration : 0;
-
-    drawStepper(painter, rects.cast.castingTimeStepperRects, castingTimeValue);
-    drawStepper(painter, rects.cast.durationStepperRects, durationValue);
+    // Stepperss
+    paintStepper(painter, rects.cast.castingTimeStepperRects, castState.castingTime);
+    paintStepper(painter, rects.cast.durationStepperRects, castState.duration);
 
     // OK button
     painter->setPen(QPen(ColorRepository::buttonOutlineColor(), 1.0));
     painter->setBrush(ColorRepository::buttonBackground());
     painter->drawEllipse(rects.cast.okRect);
+
     painter->setPen(ColorRepository::text());
     painter->drawText(rects.cast.okRect, Qt::AlignCenter, "OK");
 }
+
+
 
 } // namespace PainterUtils

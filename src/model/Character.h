@@ -4,9 +4,11 @@
 #include <QVariant>
 #include <initializer_list>
 #include <QIcon>
-#include "shared/Enums.h"
-#include "style/IconRepository.h"
+#include "Enums.h"
 #include <QUuid>
+#include "LayoutUtils.h"
+#include <memory>
+#include "IconRepository.h"
 
 class Character
 {
@@ -65,21 +67,20 @@ class Character
 
 
     QUuid uuid() const { return uuid_; };
-    QString name() const { return name_; };
-    int initiative() const { return initiative_; };
+    virtual QString name() const { return name_; };
+    virtual int initiative() const { return initiative_; };
     Cyrus::CharacterType characterType() const { return characterType_; };
-    QIcon characterIcon() const { return IconRepository::iconFor(characterType_); };
-    QIcon actionIcon() const { return IconRepository::iconFor(actionType_); };
-    Cyrus::ActionType actionType() const { return actionType_; };
+    Cyrus::ActionType actionType() const { return actionType_; }
     void setActionType(Cyrus::ActionType actionType) { actionType_ = actionType; }
-    virtual QString toString() const;
+    virtual QIcon icon() const { return IconRepository::iconFor(characterType_); };
+    virtual QString text() const;
     virtual QString combatLog() const;
     virtual LayoutSpec layoutSpec() const {
         return LayoutSpec{10, 12, 70, 0.9, 30, 0.6}; 
         // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, icon selector icon scale = 60%
     }
 
-private:
+protected:
     QUuid uuid_{};
     QString name_{};
     int initiative_{};
@@ -88,3 +89,5 @@ private:
 };
 
 Q_DECLARE_METATYPE(Character)
+Q_DECLARE_METATYPE(std::shared_ptr<Character>)
+Q_DECLARE_METATYPE(std::weak_ptr<Character>)

@@ -5,7 +5,7 @@
 #include <QPushButton>
 #include <QButtonGroup>
 #include <QHBoxLayout>
-#include "style/IconRepository.h"
+#include "IconRepository.h"
 
 class IconSelector : public QWidget {
     Q_OBJECT

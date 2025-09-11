@@ -1,5 +1,6 @@
-#include"Character.h"
-#include "../helper/Enums.h"
+#pragma once
+#include "Character.h"
+#include "Enums.h"
 
 class CharacterAction : public Character {
 
@@ -17,8 +18,9 @@ class CharacterAction : public Character {
 
     CharacterAction() : Character() {}
 
-    CharacterAction(QString name, int initiative, Cyrus::CharacterType characterType, Cyrus::ActionType actionType) 
-          : Character(name, initiative, characterType, actionType) {}
+    CharacterAction(QString name, int initiative, Cyrus::CharacterType characterType, Cyrus::ActionType actionType, QString actionName) 
+          : Character(name, initiative, characterType, actionType),
+            actionName_{actionName} {}
 
     CharacterAction(const CharacterAction& other) : Character(other) {}
 
@@ -29,7 +31,10 @@ class CharacterAction : public Character {
         return *this;
     }
 
+    QString name() const override { return actionName_; };
+    int initiative() const override { return initiative_ + duration; };
     QString actionTypeLogEntry() const { return logEntryFor(actionType()); };
+    QIcon icon() const override { return IconRepository::iconFor(actionType_); };
     QString toString() const override;
     QString combatLog() const override;
     QString actionName() const { return actionName_; }

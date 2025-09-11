@@ -9,6 +9,7 @@
     <file>icon/class/Wizard_Symbol.png</file>
     <file>icon/action/attack_icon.png</file>
     <file>icon/action/cast_icon.png</file>
+    <file>icon/action/hourglass_icon.png</file>
     <file>icon/ui/save_icon.png</file>
     <file>icon/ui/load_icon.png</file>
   </qresource>

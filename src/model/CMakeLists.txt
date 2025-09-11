@@ -1,8 +1,8 @@
 add_library(model STATIC
     Character.cpp
     Character.h
-    CharacterAction.cpp
-    CharacterAction.h
+    CastAction.cpp
+    CastAction.h
     CharacterModel.cpp
     CharacterModel.h
 )
@@ -17,4 +17,5 @@ target_link_libraries(
     model
     PUBLIC
     shared
+    style
 )

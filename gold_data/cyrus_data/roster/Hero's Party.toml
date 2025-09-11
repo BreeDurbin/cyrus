@@ -1,0 +1,17 @@
+[[characters]]
+class = 0
+initiative = 1
+name = 'Naofumi'
+uuid = '41fe8edc-66e4-4356-b36a-31218ebebd4f'
+
+[[characters]]
+class = 0
+initiative = 7
+name = 'Raphtalia'
+uuid = '26450ba3-b1e4-462e-8815-b8b9615ce2cc'
+
+[[characters]]
+class = 0
+initiative = 3
+name = 'Filo-chan'
+uuid = 'cabdc6a3-397b-4987-a2c6-92c98780e197'

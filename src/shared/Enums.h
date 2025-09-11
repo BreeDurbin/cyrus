@@ -2,6 +2,14 @@
 
 namespace Cyrus {
 
+    enum ModelRoles { 
+        CharacterRole = Qt::UserRole + 1, 
+        SegmentRole,
+        RoleTypeRole,
+        SpellNameEditRole,
+        ActionNameEditRole
+    };
+
     enum class CharacterType {
         Barbarian,
         Cleric,

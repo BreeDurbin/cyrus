@@ -2,7 +2,7 @@
 
 #include <QIcon>
 #include <QHash>
-#include "shared/Enums.h"
+#include "Enums.h"
 
 namespace IconRepository {
 
@@ -53,5 +53,6 @@ namespace IconRepository {
     inline QIcon miniCyrus() { return QIcon(":/image/CYRUS_ICON_TINY.png"); }
     inline QIcon save()      { return QIcon(":/icon/ui/save_icon.png"); }
     inline QIcon load()      { return QIcon(":/icon/ui/load_icon.png"); }
+    inline QIcon hourglass() { return QIcon(":/icon/ui/hourglass_icon.png"); }
 
 }

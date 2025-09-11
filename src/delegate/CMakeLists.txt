@@ -1,14 +1,30 @@
-add_library(delegate STATIC
+add_library(
+    delegate 
+    STATIC
     CombatLogDelegate.cpp
     CombatLogDelegate.h
     InitiativeDelegate.cpp
     InitiativeDelegate.h
-    InitiativeLayout.cpp
-    InitiativeLayout.h
+    layout/InitiativeLayout.cpp
+    layout/InitiativeLayout.h
+    layout/CombatLogLayout.h
     PainterUtils.cpp
     PainterUtils.h
 )
 
-target_include_directories(delegate PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(
+    delegate 
+    PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/layout
+)
 
-target_link_libraries(delegate PUBLIC shared model style)
+target_link_libraries(
+    delegate 
+    PUBLIC 
+    shared 
+    controller
+    model 
+    style
+    #view
+)

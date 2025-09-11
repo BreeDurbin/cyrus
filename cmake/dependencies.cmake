@@ -7,3 +7,7 @@ FetchContent_Declare(
   GIT_TAG        v3.4.0
 )
 FetchContent_MakeAvailable(tomlplusplus)
+
+
+# ---- Qt6 ----
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Sql)

@@ -3,53 +3,50 @@
 #include <QAbstractListModel>
 #include <QVector>
 #include <memory>
-#include "Character.h"
-#include "shared/Enums.h"
+#include "Enums.h"
 
-class CharacterModel : public QAbstractListModel
-{
+class Character;
+
+class CharacterModel : public QAbstractListModel {
     Q_OBJECT
+
 public:
-    using QAbstractListModel::QAbstractListModel;
+    explicit CharacterModel(QObject* parent = nullptr);
 
-    CharacterModel(QObject *parent = nullptr);
-
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex& index, int role) const override;
-    Qt::ItemFlags flags(const QModelIndex& index) const override;
-    void setFlags(const QModelIndex& index, const Qt::ItemFlags &flags);
-    void sort(int /*column*/, Qt::SortOrder order = Qt::AscendingOrder) override;
-
-    CharacterModel get(const QModelIndex& index) const;
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+    // Required model overrides
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
-    Character* getItem(const QModelIndex& index);
-    QVector<Character> getItems() const;
-    void setItem(const QModelIndex &index, const Character& character);
-    void appendItem(QString name, int initiative, Cyrus::CharacterType characterType);
-    void appendItem(Character rhs);
-    void addItems(const QVector<Character>& characters);
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
 
+    void sort(int row = 0, Qt::SortOrder order = Qt::AscendingOrder) override;
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+
+    // Accessors
+    std::shared_ptr<Character> getItem(const QModelIndex &index);
+    QVector<std::shared_ptr<Character>> getItems() const;
+
+    void setItem(const QModelIndex &index, std::shared_ptr<Character> character);
+
+    // Add/remove
+    void appendItem(QString name, int initiative, Cyrus::CharacterType characterType);
+    void appendItem(std::shared_ptr<Character> rhs);
+    void addItems(const QVector<std::shared_ptr<Character>>& characters);
+    void removeItem(const QModelIndex& index);
+    void clear();
+
+    // Initiative/segment control
     void advanceSegment(int segment);
     void backtrackSegment(int segment);
     void advanceRound();
     void backtrackRound();
 
-    int segment() const { return segment_; };
-    int round() const {return round_; };
-
-    enum { 
-        CharacterRole = Qt::UserRole + 1, 
-        SegmentRole = Qt::UserRole + 2 
-    };
-
 signals:
-    void segmentUpdate(int segment) const;
-    void roundUpdate(int round) const;
+    void segmentUpdate(int segment);
+    void roundUpdate(int round);
 
 private:
-    QVector<Character> items_;
-    int segment_{1};
-    int round_{1};
-
+    QVector<std::shared_ptr<Character>> items_;
+    int segment_ = 0;
+    int round_   = 1;
 };

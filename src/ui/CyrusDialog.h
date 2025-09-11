@@ -3,54 +3,52 @@
 #include <QMainWindow>
 #include <QItemSelectionModel>
 #include <QAbstractItemModel>
-#include "model/CharacterModel.h"
-#include "model/InitiativeDelegate.h"
-#include "model/CombatLogDelegate.h"
-#include "view/InitiativeView.h"
+#include "CharacterModel.h"
+#include "InitiativeDelegate.h"
+#include "CombatLogDelegate.h"
+#include "InitiativeView.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CyrusDialog; }
 QT_END_NAMESPACE
 
-class CyrusDialog 
-    : public QMainWindow 
-{
+
+class CyrusDialog : public QMainWindow {
     Q_OBJECT
 
 public:
-
-    CyrusDialog(QWidget *parent = nullptr);
+    explicit CyrusDialog(QWidget *parent = nullptr);
     ~CyrusDialog();
-    void setupHeroFrame();
-    void setupLabelStyleSheets();
-    void setupLineEditStyleSheets();
-    void setupSpinBoxStyleSheets();
-    void setupButtonStyleSheets();
-    void setupItemViews();
-    void setupConnections();
-    
+
+signals:
+    void addRosterToInitiative();
+    void addRosterMemberToInitiative(const QModelIndex& index);
+
 private:
+    Ui::CyrusDialog* ui;  // generated UI object
 
-    //Selection Models
-    QItemSelectionModel* characterSelection_; 
-    QItemSelectionModel* combatLogSelection_;
-
-    //Character models
-    CharacterModel* characterModel_;
-    CharacterModel* initiativeModel_;
-    CharacterModel* combatLogModel_;
-
-    //Character Delegates
+    // Delegates (UI only, draw/edit logic)
     InitiativeDelegate* initiativeDelegate_;
     CombatLogDelegate* combatLogDelegate_;
 
-    //Views
-    InitiativeView* initiativeView_;
+    // Selection models (tied to views, not controller)
+    QItemSelectionModel* characterSelection_;
+    QItemSelectionModel* combatLogSelection_;
 
-    //helpers
-    void selectNext(const QAbstractItemModel* model);
-    void selectPrevious(const QAbstractItemModel* model);
+    // Controller mediates between models and views
+    CharacterController* characterController_;
 
-protected:
-    Ui::CyrusDialog *ui;
+    // UI-only setup helpers
+    void setupMainDialog();
+    void setupHeroFrame();
+    void setupLabels();
+    void setupLineEdits();
+    void setupSpinBoxes();
+    void setupButtons();
+    void setupComboBoxes();
+    void setupItemViews();
+    void setupConnections();
+
+    QStringList listFilenames(const std::string& directoryPath);
+
 };

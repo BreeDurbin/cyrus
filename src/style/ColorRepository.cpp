@@ -60,6 +60,11 @@ QColor ColorRepository::text()
     return m_textPrimary();
 }
 
+QColor ColorRepository::placeholderText() 
+{
+    return m_textSecondary();
+}
+
 QColor ColorRepository::selectedForeground()
 {
     return m_goldHighlight();

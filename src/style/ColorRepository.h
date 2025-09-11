@@ -11,6 +11,7 @@ namespace ColorRepository
     QColor windowBackground();
     QColor baseBackground();
     QColor text();
+    QColor placeholderText();
 
     QColor selectedForeground();
     QColor selectedBackground();

@@ -6,7 +6,11 @@ add_library(style STATIC
     IconRepository.h
 )
 
-target_include_directories(style PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(
+    style 
+    PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 target_link_libraries(style
     PUBLIC

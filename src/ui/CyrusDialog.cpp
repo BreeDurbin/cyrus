@@ -1,61 +1,65 @@
 #include "CyrusDialog.h"
 #include "ui_CyrusDialog.h"
-#include "style/StyleRepository.h"
+
+
+#include "StyleRepository.h"
 #include <iostream>
 #include <QStringList>
 #include <QGroupBox>
 #include <QTextEdit>
 #include <QStringListModel>
 #include <QHBoxLayout>
-#include "TomlHelper.h"
-#include "shared/Enums.h"
+#include "Enums.h"
 #include <QVector>
 #include <QShortcut>
+#include "InitiativeLayout.h"
+#include "CombatLogLayout.h"
+#include "CastAction.h"
+#include <filesystem>
 
 
 CyrusDialog::CyrusDialog(QWidget *parent) 
     : QMainWindow(parent), 
-      ui(new Ui::CyrusDialog)
+    ui(new Ui::CyrusDialog)
 {
     Q_INIT_RESOURCE(icon);
     Q_INIT_RESOURCE(image);
 
-    setWindowIcon(IconRepository::miniCyrus());
-
     ui->setupUi(this);
 
-    // Character models
-    characterModel_ = new CharacterModel(this);
-    initiativeModel_ = new CharacterModel(this);
-    combatLogModel_ = new CharacterModel(this);
+    //Wire up Controller
+    characterController_ = new CharacterController(
+        ui->initiativeOrder,
+        //Models are parented by CyrusDialog so it will handle cleanup
+        new CharacterModel(this),
+        new CharacterModel(this),
+        new CharacterModel(this),
+        this
+    );
 
     // Attach models to views
-    ui->characterRepository->setModel(characterModel_);
-    ui->initiativeOrder->setModel(initiativeModel_);
-    ui->combatLog->setModel(combatLogModel_);
+    ui->characterRepository->setModel(characterController_->rosterModel());
+    ui->initiativeOrder->setModel(characterController_->initiativeModel());
+    ui->combatLog->setModel(characterController_->combatLogModel());
 
     // Now it's safe to get the selection models
     characterSelection_ = ui->characterRepository->selectionModel();
     combatLogSelection_ = ui->combatLog->selectionModel();
 
-    initiativeDelegate_ = new InitiativeDelegate(this);
+    initiativeDelegate_ = new InitiativeDelegate(characterController_, this);
     combatLogDelegate_ = new CombatLogDelegate(this);
-
-    initiativeView_ = ui->initiativeOrder;
 
     //Configure styling
     setupHeroFrame();
-    setupLabelStyleSheets();
-    setupLineEditStyleSheets();
-    setupSpinBoxStyleSheets();
-    setupButtonStyleSheets();
+    setupLabels();
+    setupLineEdits();
+    setupSpinBoxes();
+    setupButtons();
+    setupComboBoxes();
     setupItemViews();
     setupConnections();
-
-    //title and size
-    setStyleSheet(StyleRepository::mainWindow());
-    //setStyleSheet("#CyrusDialog { border-image: url(:/image/background4.png) 0 0 0 0 stretch fixed;}");
-
+    // important to be called last after all other ui configured
+    setupMainDialog();
 }
 
 CyrusDialog::~CyrusDialog()
@@ -65,6 +69,24 @@ CyrusDialog::~CyrusDialog()
     delete ui;
 }
 
+void CyrusDialog::setupMainDialog() {
+
+    setWindowIcon(IconRepository::miniCyrus());
+    setStyleSheet(StyleRepository::mainWindow());
+    //setStyleSheet("#CyrusDialog { border-image: url(:/image/background4.png) 0 0 0 0 stretch fixed;}");
+    layout()->activate();
+    int minW = ui->characterRepository->minimumWidth()
+             + ui->initiativeOrder->minimumWidth()
+             + ui->combatLog->minimumWidth()
+             + ui->iconSelector->minimumWidth()
+             + layout()->spacing() * 3
+             + layout()->contentsMargins().left()
+             + layout()->contentsMargins().right();
+
+    qDebug() << "Setting main dialog width " << minW;
+    setMinimumWidth(minW);
+}
+
 void CyrusDialog::setupHeroFrame() {
     QPixmap bg(":/image/CYRUS_HERO.png");
     ui->heroFrame->setFixedHeight(bg.height());  // lock vertical size
@@ -72,7 +94,7 @@ void CyrusDialog::setupHeroFrame() {
     ui->heroFrame->setStyleSheet(StyleRepository::hero());
 }
 
-void CyrusDialog::setupLabelStyleSheets() {
+void CyrusDialog::setupLabels() {
     ui->participantsLabel->setStyleSheet(StyleRepository::label());
     ui->initiativeOrderLabel->setStyleSheet(StyleRepository::label());
     ui->combatLogLabel->setStyleSheet(StyleRepository::label());
@@ -80,15 +102,15 @@ void CyrusDialog::setupLabelStyleSheets() {
     ui->roundCounterLabel->setStyleSheet(StyleRepository::label());
 }
 
-void CyrusDialog::setupLineEditStyleSheets(){
+void CyrusDialog::setupLineEdits(){
     ui->characterNameLineEdit->setStyleSheet(StyleRepository::lineEdit());
 }
 
-void CyrusDialog::setupSpinBoxStyleSheets(){
+void CyrusDialog::setupSpinBoxes(){
     ui->characterInitiativeSpinBox->setStyleSheet(StyleRepository::spinBox());
 }
 
-void CyrusDialog::setupButtonStyleSheets() {
+void CyrusDialog::setupButtons() {
     ui->addCharacterButton->setStyleSheet(StyleRepository::pushButton());
     ui->addToInitiativeButton->setStyleSheet(StyleRepository::pushButton());
     ui->addAllToInitiativeButton->setStyleSheet(StyleRepository::pushButton());
@@ -124,19 +146,50 @@ void CyrusDialog::setupButtonStyleSheets() {
 
 }
 
+void CyrusDialog::setupComboBoxes() {
+    // Apply style
+    ui->rosterGroupsComboBox->setStyleSheet(StyleRepository::comboBox());
+    ui->rosterGroupsComboBox->clear();
+    ui->rosterGroupsComboBox->setEditable(true);
+
+    // Populate from helper
+    const QStringList rosterFiles = listFilenames("cyrus_data/roster");
+    ui->rosterGroupsComboBox->addItems(rosterFiles);
+
+    if (!rosterFiles.isEmpty()) {
+        ui->rosterGroupsComboBox->setCurrentIndex(0);
+    }
+}
+
 void CyrusDialog::setupItemViews(){
+
     // Character Repository
     ui->characterRepository->setStyleSheet(StyleRepository::itemView());
     ui->characterRepository->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->characterRepository->setFocusPolicy(Qt::NoFocus);
     ui->characterRepository->setMouseTracking(true);
+
     // Initiative Order
+    auto dummy      = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
+    const int initiativeOrderWidth = InitiativeLayout::preferredWidth(dummy->layoutSpec(), dummy);
+    qDebug() << "Setting initiativeOrder Item View width to: " << initiativeOrderWidth;
+    ui->initiativeOrder->setMinimumWidth(initiativeOrderWidth);
+    // set min width for entire column
+    ui->initiativeOrderFrame->setMinimumWidth(initiativeOrderWidth);
+
     ui->initiativeOrder->setStyleSheet(StyleRepository::itemView());
-    ui->initiativeOrder->setSelectionMode(QAbstractItemView::NoSelection);
+    ui->initiativeOrder->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->initiativeOrder->setFocusPolicy(Qt::NoFocus);
     ui->initiativeOrder->setItemDelegate(initiativeDelegate_);
     ui->initiativeOrder->setMouseTracking(true);
     // Combat Log
+    dummy = std::make_shared<CastAction>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, "ABI_DALZIM'S_HORRID_WILTING", 10, 0);
+    const int combatLogWidth = CombatLogLayout::preferredWidth(dummy->layoutSpec(), dummy);
+    qDebug() << "Setting combatLog Item View width to: " << combatLogWidth;
+    ui->combatLog->setMinimumWidth(combatLogWidth);
+    // set min width for entire column
+    ui->combatLogFrame->setMinimumWidth(combatLogWidth);
+
     ui->combatLog->setStyleSheet(StyleRepository::itemView());
     ui->combatLog->setSelectionMode(QAbstractItemView::NoSelection);
     ui->combatLog->setFocusPolicy(Qt::NoFocus);
@@ -146,178 +199,155 @@ void CyrusDialog::setupItemViews(){
 
 void CyrusDialog::setupConnections(){
 
-    //setup addCharacterButton to add an item to the characterRepository using the text in the characterNameLineEdit
-    QObject::connect(
-        ui->addCharacterButton, &QPushButton::clicked,
-        [this](){
+    //setup addCharacterButton to add character to the roster
+    connect(ui->addCharacterButton, &QPushButton::clicked,
+        this, [this]() {
             QString text = ui->characterNameLineEdit->text();
-            if(text.isEmpty()) return;
+            ui->characterNameLineEdit->clear();
+            if (text.isEmpty()) return;
             int initiative = ui->characterInitiativeSpinBox->value();
             int classId = ui->iconSelector->currentIndex();
             Cyrus::CharacterType type = static_cast<Cyrus::CharacterType>(classId);
-            characterModel_->appendItem(text, initiative, type);
-            ui->characterNameLineEdit->clear(); // Clear the line edit after adding
-            QModelIndex bottomIndex = characterModel_->index(characterModel_->rowCount() - 1, 0);
+            QModelIndex bottomIndex = characterController_->addToRoster(text, initiative, type);
             characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
         }
     );
 
-    //setup saveButton to save off toml file
-    QObject::connect(
-        ui->saveButton, &QPushButton::clicked,
-        [this](){
-            //Save off characters
-            qDebug() << "Saving repository ...";
-            const std::string filename = "default_name.toml";
-            const auto & characters = characterModel_->getItems();
-            if(characters.empty()) {
-                qDebug() << "No characters to save. Saving failed.";
-                return;
-            }
-            TomlHelper::saveRepository(filename, characterModel_->getItems());
-        }
-    );
+    //setup save/load to toml file
 
-    //setup loadButton to load in toml file
-    QObject::connect(
-        ui->loadButton, &QPushButton::clicked,
-        [this](){
-            //Load in characters
-            qDebug() << "Loading repository ...";
-            const std::string filename = "default_name.toml";
-            const auto& characters = TomlHelper::loadRepository(filename);
-            qDebug() << "Loaded " << characters.size() << "characters.";
-            characterModel_->addItems(characters);
-            // Auto select bottom most character (Most recent add)
-            QModelIndex bottomIndex = characterModel_->index(characterModel_->rowCount() - 1, 0);
+    //save button
+    connect(ui->saveButton, &QPushButton::clicked, this, [this]() {
+        const QString rosterName = ui->rosterGroupsComboBox->currentText().trimmed();
+        if (rosterName.isEmpty()) {
+            qWarning() << "No roster name entered to save.";
+            return;
+        }
+
+        characterController_->saveRoster(rosterName.toStdString());
+    });
+
+    //load button
+    connect(ui->loadButton, &QPushButton::clicked, this, [this]() {
+        // Get the currently selected roster file from the combo box
+        const QString selectedRoster = ui->rosterGroupsComboBox->currentText();
+        if (selectedRoster.isEmpty()) {
+            qWarning() << "No roster selected to load.";
+            return;
+        }
+
+        // Load the selected roster into the controller
+        QModelIndex bottomIndex = characterController_->loadRoster(selectedRoster.toStdString());
+
+        // Update selection to the last row (bottomIndex) if needed
+        if (bottomIndex.isValid() && characterSelection_) {
             characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
         }
-    );
+    });
 
-    //Setup characterRepository to add a character to the initiativeOrder
-    QObject::connect(
-        ui->addToInitiativeButton, &QPushButton::clicked,
-        [this]() {
-            QModelIndex index = characterSelection_->currentIndex();
-            if (Character* character = characterModel_->getItem(index)) {
-                initiativeModel_->appendItem(*character);
-                initiativeModel_->sort(0);
-
-                // If nothing in initiativeView is selected, select the first row
-                if (!initiativeView_->hasActiveIndex() && initiativeModel_->rowCount() > 0) {
-                    QModelIndex first = initiativeModel_->index(0, 0);
-                    initiativeView_->setActiveIndex(first); 
-                }
-            }
+    // Connect combo box editing finished (when user presses Enter)
+    connect(ui->rosterGroupsComboBox->lineEdit(), &QLineEdit::returnPressed, this, [this]() {
+        const QString rosterName = ui->rosterGroupsComboBox->currentText().trimmed();
+        if (rosterName.isEmpty()) {
+            qWarning() << "Roster name is empty.";
+            return;
         }
-    );
 
+        QModelIndex bottomIndex = characterController_->loadRoster(rosterName.toStdString());
 
-    // Add all characters in repo to initiative order
-    QObject::connect(
-        ui->addAllToInitiativeButton, &QPushButton::clicked,
-        [this]() {
-            // Loop over all rows in characterModel_
-            for (int row = 0; row < characterModel_->rowCount(); ++row) {
-                QModelIndex idx = characterModel_->index(row, 0);
-                if (Character* character = characterModel_->getItem(idx)) {
-                    initiativeModel_->appendItem(*character);
-                }
-            }
-
-            // Sort initiative after adding
-            initiativeModel_->sort(0);
-
-            // If nothing in initiativeOrder is selected, select the first row
-            if (!initiativeView_->hasActiveIndex() && initiativeModel_->rowCount() > 0) {
-                QModelIndex first = initiativeModel_->index(0, 0);
-                initiativeView_->setActiveIndex(first);
-            }
+        if (bottomIndex.isValid() && characterSelection_) {
+            characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
         }
-    );
+    });
 
-    //Setup initiativeOrder progress the order and add to the combat log
-    QObject::connect(
-        ui->nextButton, &QPushButton::clicked,
-        [this](){
-            QModelIndex index = initiativeView_->activeIndex();
-            if (Character* character = initiativeModel_->getItem(index)) {
-                combatLogModel_->appendItem(*character);
-            }
-            //Move selection for initiative selection to next
-            selectNext(initiativeModel_);
-            //keep combat log scrolled to bottom
-            ui->combatLog->scrollToBottom();
-        }
-    );
+    //Add the selected character in the roster to the initiativeOrder
+    connect(ui->addToInitiativeButton, &QPushButton::clicked,
+            this, [this]() {
+                const QModelIndex& index = characterSelection_->currentIndex();
+                characterController_->addRosterMemberToInitiative(index);
+            });
 
-    //Setup initiativeOrder to go back if the previous button is clicked
-    QObject::connect(
-        ui->previousButton, &QPushButton::clicked,
-        [&](){
-            selectPrevious(initiativeModel_);
-        }
-    );
+    // Add all characters in roster to initiative order
+    QObject::connect(ui->addAllToInitiativeButton, &QPushButton::clicked,
+                 characterController_, &CharacterController::addRosterToInitiative);
 
-    //connect delete buttons 
-    connect(initiativeDelegate_, &InitiativeDelegate::deleteItem, this,
-        [this](const QModelIndex &index) {
-            initiativeModel_->removeRow(index.row());
-        }
-    );
+    // next/prev Button wiring
+    connect(ui->nextButton,       &QPushButton::clicked,
+            characterController_, &CharacterController::advanceInitiative);
+    connect(ui->previousButton,   &QPushButton::clicked,
+            characterController_, &CharacterController::backtrackInitiative);
+
+    // clear buttons
+    connect(ui->initiativeOrderClearButton, &QPushButton::clicked,
+            characterController_, &CharacterController::clearInitiativeOrder);
+    connect(ui->combatLogClearButton, &QPushButton::clicked,
+            characterController_, &CharacterController::clearCombatLog);
+
 
     //connect segment counter and round counter
-    connect(initiativeModel_, &CharacterModel::segmentUpdate, this,
-        [this](int segment){
-            QString str = QString("Segment: ")  + QString::number(segment) + QString(" / 10");
-            ui->segmentCounterLabel->setText(str);
-        }
-    );
+    connect(characterController_, &CharacterController::segmentChangedText,
+            ui->segmentCounterLabel, &QLabel::setText);
 
-    connect(initiativeModel_, &CharacterModel::roundUpdate, this,
-        [this](int round){
-            QString str = QString("Round: ")  + QString::number(round);
-            ui->roundCounterLabel->setText(str);
-        }
-    );
+    connect(characterController_, &CharacterController::roundChangedText,
+            ui->roundCounterLabel, &QLabel::setText);
+
+    // Have controller scroll combat dialog to bottom 
+    connect(characterController_, &CharacterController::requestScrollCombatLogToBottom,
+            ui->combatLog, [this]() {
+                auto model = ui->combatLog->model();
+                if (!model || model->rowCount() == 0) return;
+
+                QModelIndex lastIndex = model->index(model->rowCount() - 1, 0);
+                ui->combatLog->scrollTo(lastIndex, QAbstractItemView::PositionAtBottom);
+            });
+
+
+    // Connect signals from initiative delegate to characterController_
+    connect(initiativeDelegate_, &InitiativeDelegate::deleteItemClicked,
+        characterController_, &CharacterController::deleteItem);
+    
+    connect(initiativeDelegate_, &InitiativeDelegate::spellNameEdited,
+        characterController_, &CharacterController::setSpellName);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::iconSelectorClicked,
+            characterController_, &CharacterController::updateAction);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::decrementCastingTimeClicked,
+            characterController_, &CharacterController::decrementCastingTime);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::incrementCastingTimeClicked,
+            characterController_, &CharacterController::incrementCastingTime);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::decrementDurationClicked,
+            characterController_, &CharacterController::decrementDuration);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::incrementDurationClicked,
+            characterController_, &CharacterController::incrementDuration);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::castSubmitted,
+            characterController_, &CharacterController::castSubmitted);
 
 }
 
+QStringList CyrusDialog::listFilenames(const std::string& directoryPath) {
+    QStringList result;
+    const std::filesystem::path dirPath{directoryPath};
 
-//Helpers
-void CyrusDialog::selectNext(const QAbstractItemModel* model) {
-    QModelIndex active = initiativeView_->hasActiveIndex()
-        ? initiativeView_->activeIndex()
-        : model->index(0, 0);
-
-    int nextRow = (active.row() + 1) % model->rowCount();
-    QModelIndex nextIndex = model->index(nextRow, 0);
-
-    // keep initiativeOrder in sync
-    Character c = model->data(nextIndex, CharacterModel::CharacterRole).value<Character>();
-    initiativeModel_->advanceSegment(c.initiative());
-
-    //selection model should be completely overriden and we use out own selection system based on segments and the underlying character model
-    initiativeView_->setActiveIndex(nextIndex);
-}
-
-void CyrusDialog::selectPrevious(const QAbstractItemModel* model) {
-    QModelIndex active = initiativeView_->hasActiveIndex()
-        ? initiativeView_->activeIndex()
-        : model->index(0, 0);
-
-    int previousRow = active.row() - 1;
-    if (previousRow < 0) {
-        // Wrap around to the last rows
-        previousRow = model->rowCount() - 1;
+    if (!std::filesystem::exists(dirPath) || !std::filesystem::is_directory(dirPath)) {
+        qWarning() << "Directory does not exist:" << directoryPath;
+        return result;
     }
 
-    QModelIndex previousIndex = model->index(previousRow, 0);
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".toml") {
+                result.append(QString::fromStdString(entry.path().stem().string()));
+            }
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        qWarning() << "Error reading directory:" << e.what();
+    }
 
-    // keep initiativeOrder in sync
-    Character c = model->data(previousIndex, CharacterModel::CharacterRole).value<Character>();
-    initiativeModel_->backtrackSegment(c.initiative());
-
-    //selection model should be completely overriden and we use out own selection system based on segments and the underlying character model
-    initiativeView_->setActiveIndex(previousIndex);
+    return result;
 }
+
+

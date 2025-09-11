@@ -1,0 +1,41 @@
+[[characters]]
+class = 0
+initiative = 3
+name = 'Guts'
+uuid = '7ca6268d-1f0a-4bba-bb62-227e8375a1bc'
+
+[[characters]]
+class = 0
+initiative = 4
+name = 'Casca'
+uuid = '83bd4380-932e-4cee-b278-9f1cd0a2a940'
+
+[[characters]]
+class = 0
+initiative = 4
+name = 'Griffith'
+uuid = '977b926a-9713-47c6-b454-6b346486e168'
+
+[[characters]]
+class = 0
+initiative = 9
+name = 'Judeau'
+uuid = '34187cbe-2460-445b-aac3-f11b51a31eb2'
+
+[[characters]]
+class = 0
+initiative = 9
+name = 'Pippin'
+uuid = '049fc806-c9ac-4505-849c-821e71362b7e'
+
+[[characters]]
+class = 0
+initiative = 1
+name = 'Corkus'
+uuid = '96dec369-c793-48fd-9634-9c876016d3f5'
+
+[[characters]]
+class = 0
+initiative = 3
+name = 'Rickert'
+uuid = '38558042-806d-4139-b860-f86f74df8504'
