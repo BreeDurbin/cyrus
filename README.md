@@ -10,7 +10,7 @@
 Cyrus is an initiative and combat action tracker for the individual initiative system in AD&D 2nd edition.
 
 ## Preview:
-![preview](./docs/screenshots/CYRUS_PREVIEW)
+![preview](./docs/screenshots/CYRUS_PREVIEW.png)
 
 
 Dependencies:
