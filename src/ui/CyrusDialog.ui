@@ -233,7 +233,7 @@
           <layout class="QHBoxLayout" name="IconSelectorHorizontalLayout"/>
          </item>
          <item>
-          <widget class="QListView" name="characterRepository">
+          <widget class="QListView" name="roster">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
              <horstretch>0</horstretch>

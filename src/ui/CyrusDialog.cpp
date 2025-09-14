@@ -12,8 +12,8 @@
 #include "Enums.h"
 #include <QVector>
 #include <QShortcut>
-#include "InitiativeLayout.h"
-#include "CombatLogLayout.h"
+#include "CharacterLayoutEngine.h"
+#include "CombatLogLayoutEngine.h"
 #include "CastAction.h"
 #include <filesystem>
 
@@ -38,14 +38,15 @@ CyrusDialog::CyrusDialog(QWidget *parent)
     );
 
     // Attach models to views
-    ui->characterRepository->setModel(characterController_->rosterModel());
+    ui->roster->setModel(characterController_->rosterModel());
     ui->initiativeOrder->setModel(characterController_->initiativeModel());
     ui->combatLog->setModel(characterController_->combatLogModel());
 
     // Now it's safe to get the selection models
-    characterSelection_ = ui->characterRepository->selectionModel();
+    characterSelection_ = ui->roster->selectionModel();
     combatLogSelection_ = ui->combatLog->selectionModel();
-
+    
+    rosterDelegate_ = new RosterDelegate(characterController_, this);
     initiativeDelegate_ = new InitiativeDelegate(characterController_, this);
     combatLogDelegate_ = new CombatLogDelegate(this);
 
@@ -75,7 +76,7 @@ void CyrusDialog::setupMainDialog() {
     setStyleSheet(StyleRepository::mainWindow());
     //setStyleSheet("#CyrusDialog { border-image: url(:/image/background4.png) 0 0 0 0 stretch fixed;}");
     layout()->activate();
-    int minW = ui->characterRepository->minimumWidth()
+    int minW = ui->roster->minimumWidth()
              + ui->initiativeOrder->minimumWidth()
              + ui->combatLog->minimumWidth()
              + ui->iconSelector->minimumWidth()
@@ -163,15 +164,18 @@ void CyrusDialog::setupComboBoxes() {
 
 void CyrusDialog::setupItemViews(){
 
-    // Character Repository
-    ui->characterRepository->setStyleSheet(StyleRepository::itemView());
-    ui->characterRepository->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->characterRepository->setFocusPolicy(Qt::NoFocus);
-    ui->characterRepository->setMouseTracking(true);
+    // Roster
+    ui->roster->setStyleSheet(StyleRepository::itemView());
+    ui->roster->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->roster->setFocusPolicy(Qt::NoFocus);
+    ui->roster->setItemDelegate(rosterDelegate_);
+    ui->roster->setMouseTracking(true);
 
     // Initiative Order
     auto dummy      = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
-    const int initiativeOrderWidth = InitiativeLayout::preferredWidth(dummy->layoutSpec(), dummy);
+    CharacterLayoutEngine engine;
+    const int initiativeOrderWidth = engine.minimumWidth(dummy);
+
     qDebug() << "Setting initiativeOrder Item View width to: " << initiativeOrderWidth;
     ui->initiativeOrder->setMinimumWidth(initiativeOrderWidth);
     // set min width for entire column
@@ -184,7 +188,8 @@ void CyrusDialog::setupItemViews(){
     ui->initiativeOrder->setMouseTracking(true);
     // Combat Log
     dummy = std::make_shared<CastAction>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, "ABI_DALZIM'S_HORRID_WILTING", 10, 0);
-    const int combatLogWidth = CombatLogLayout::preferredWidth(dummy->layoutSpec(), dummy);
+    
+    const int combatLogWidth = CombatLogLayoutEngine::minimumWidth(dummy);
     qDebug() << "Setting combatLog Item View width to: " << combatLogWidth;
     ui->combatLog->setMinimumWidth(combatLogWidth);
     // set min width for entire column
@@ -325,6 +330,17 @@ void CyrusDialog::setupConnections(){
 
     connect(initiativeDelegate_, &InitiativeDelegate::castSubmitted,
             characterController_, &CharacterController::castSubmitted);
+
+    //Connect signals for roster delegate to characterController_
+
+    connect(rosterDelegate_,      &RosterDelegate::incrementRosterMemberInitiativeClicked,
+            characterController_, &CharacterController::incrementRosterMemberInitiative);
+    connect(rosterDelegate_,      &RosterDelegate::decrementRosterMemberInitiativeClicked,
+            characterController_, &CharacterController::decrementRosterMemberInitiative);
+    connect(rosterDelegate_,      &RosterDelegate::cloneRosterMemberClicked,
+            characterController_, &CharacterController::cloneRosterMember);
+    connect(rosterDelegate_,      &RosterDelegate::deleteButtonClicked,
+            characterController_, &CharacterController::deleteRosterMember);
 
 }
 

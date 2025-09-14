@@ -7,10 +7,10 @@
 namespace IconRepository {
 
     inline const QHash<Cyrus::CharacterType, QString> classIconPaths = {
-        { Cyrus::CharacterType::Barbarian, ":/icon/class/Barb_Symbol.png" },
-        { Cyrus::CharacterType::Cleric,    ":/icon/class/Cleric_Symbol.png" },
-        { Cyrus::CharacterType::Druid,     ":/icon/class/Druid_Symbol.png" },
-        { Cyrus::CharacterType::Fighter,   ":/icon/class/Fighter_Symbol.png" },
+        { Cyrus::CharacterType::Barbarian, ":/icon/class/character_icon2.png" },
+        { Cyrus::CharacterType::Cleric,    ":/icon/class/character_icon3.png" },
+        { Cyrus::CharacterType::Druid,     ":/icon/class/character_icon4.png" },
+        { Cyrus::CharacterType::Fighter,   ":/icon/class/character_icon5.png" },
         { Cyrus::CharacterType::Monster,   ":/icon/class/Monster_Symbol.png" },
         { Cyrus::CharacterType::Paladin,   ":/icon/class/Paladin_Symbol.png" },
         { Cyrus::CharacterType::Wizard,    ":/icon/class/Wizard_Symbol.png" }
@@ -54,5 +54,7 @@ namespace IconRepository {
     inline QIcon save()      { return QIcon(":/icon/ui/save_icon.png"); }
     inline QIcon load()      { return QIcon(":/icon/ui/load_icon.png"); }
     inline QIcon hourglass() { return QIcon(":/icon/ui/hourglass_icon.png"); }
+    inline QIcon submit()    { return QIcon(":icon/ui/submit_icon.png"); }
+    inline QIcon clone()    { return QIcon(":icon/ui/clone_icon.png"); }
 
 }

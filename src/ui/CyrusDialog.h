@@ -4,6 +4,7 @@
 #include <QItemSelectionModel>
 #include <QAbstractItemModel>
 #include "CharacterModel.h"
+#include "RosterDelegate.h"
 #include "InitiativeDelegate.h"
 #include "CombatLogDelegate.h"
 #include "InitiativeView.h"
@@ -28,6 +29,7 @@ private:
     Ui::CyrusDialog* ui;  // generated UI object
 
     // Delegates (UI only, draw/edit logic)
+    RosterDelegate* rosterDelegate_;
     InitiativeDelegate* initiativeDelegate_;
     CombatLogDelegate* combatLogDelegate_;
 

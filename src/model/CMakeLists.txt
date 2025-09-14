@@ -1,4 +1,6 @@
 add_library(model STATIC
+    AttackAction.cpp
+    AttackAction.h
     Character.cpp
     Character.h
     CastAction.cpp

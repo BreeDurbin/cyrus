@@ -6,7 +6,6 @@
 #include <QIcon>
 #include "Enums.h"
 #include <QUuid>
-#include "LayoutUtils.h"
 #include <memory>
 #include "IconRepository.h"
 
@@ -21,6 +20,8 @@ class Character
         double heroIconScale;               // fraction of row height
         int initiativeWidth;
         double iconSelectorIconScale;       // fraction of row height
+        double deleteButtonScale;
+        double submitButtonScale;
     };
 
     Character()
@@ -69,6 +70,7 @@ class Character
     QUuid uuid() const { return uuid_; };
     virtual QString name() const { return name_; };
     virtual int initiative() const { return initiative_; };
+    virtual void setInitiative(const int initiative) { initiative_ = initiative; };
     Cyrus::CharacterType characterType() const { return characterType_; };
     Cyrus::ActionType actionType() const { return actionType_; }
     void setActionType(Cyrus::ActionType actionType) { actionType_ = actionType; }
@@ -76,8 +78,9 @@ class Character
     virtual QString text() const;
     virtual QString combatLog() const;
     virtual LayoutSpec layoutSpec() const {
-        return LayoutSpec{10, 12, 70, 0.9, 30, 0.6}; 
-        // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, icon selector icon scale = 60%
+        return LayoutSpec{10, 12, 70, 0.9, 30, 0.6, 0.6, 0.6}; 
+        // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, 
+        // icon selector icon scale = 60%, delete rect icon scale = 80%, submit rect icon scale = 80%
     }
 
 protected:

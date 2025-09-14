@@ -14,14 +14,48 @@
 #include "Enums.h"
 #include "InitiativeView.h"
 #include "PainterUtils.h"
-#include "InitiativeLayout.h"
+#include "LayoutFactory.h"
+#include "LayoutEngine.h"
 #include <QLineEdit>
 #include <QPainterPath>
 
 #include<iostream>
 
 InitiativeDelegate::InitiativeDelegate(CharacterController* characterController, QObject *parent) 
-    : QStyledItemDelegate(parent), characterController_{characterController} {}
+    : QStyledItemDelegate(parent), characterController_{characterController} {
+
+    //get layout engines
+    auto* characterLayoutEngine = static_cast<CharacterLayoutEngine*>(LayoutFactory::forCharacterType<Character>());
+    //const auto& castActionLayoutengine = LayoutFactory::forCharacterType<CastAction>();   //need this later
+    //const auto& attackActionLayoutEngine = LayoutFactory::forCharacterType<AttackAction>();  // need this later
+
+    //Chain character Layout Engine signals to initiative delegate signals
+    //create a dummy csharacter for the factory sso it will return a car layout engine
+    connect(characterLayoutEngine, &CharacterLayoutEngine::spellNameEdited,
+            this, &InitiativeDelegate::spellNameEdited);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementCastingTimeClicked,
+            this, &InitiativeDelegate::decrementCastingTimeClicked);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementCastingTimeClicked,
+            this, &InitiativeDelegate::incrementCastingTimeClicked);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementDurationClicked,
+            this, &InitiativeDelegate::decrementDurationClicked);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementDurationClicked,
+            this, &InitiativeDelegate::incrementDurationClicked);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::castSubmitted,
+            this, &InitiativeDelegate::castSubmitted);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::deleteItemClicked,
+            this, &InitiativeDelegate::deleteItemClicked);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::iconSelectorClicked,
+            this, &InitiativeDelegate::iconSelectorClicked);
+
+}
 
 
 void InitiativeDelegate::paint(QPainter* painter,
@@ -45,9 +79,10 @@ void InitiativeDelegate::paint(QPainter* painter,
 
     QPoint localCursor = cursorPosInItem(option);
 
+    const auto& engine = LayoutFactory::forCharacter(*character);
+
     // Use static layout engine
-    InitiativeLayout::InitiativeRects rects =
-        InitiativeLayout::calculate(option.rect, spec, *character, isActiveIndex, isExpanded);
+    const auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
 
     // --- Background ---
     QColor bg = isCurrentSegment
@@ -57,64 +92,27 @@ void InitiativeDelegate::paint(QPainter* painter,
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setPen(Qt::NoPen);
     painter->setBrush(bg);
-    painter->drawRoundedRect(rects.baseRect, spec.cornerRadius, spec.cornerRadius);
+    painter->drawRoundedRect(layout->baseRect, spec.cornerRadius, spec.cornerRadius);
 
     // --- Hover outline ---
     if (isHovered || isActiveIndex) {
-        QPen hoverPen(ColorRepository::hoverOutlineBrush(rects.baseRect), 1.5);
+        QPen hoverPen(ColorRepository::hoverOutlineBrush(layout->baseRect), 1.5);
         painter->setPen(hoverPen);
         painter->setBrush(Qt::NoBrush);
-        painter->drawRoundedRect(rects.baseRect.adjusted(-3, -3, 3, 3),
+        painter->drawRoundedRect(layout->baseRect.adjusted(-3, -3, 3, 3),
                                  spec.cornerRadius, spec.cornerRadius);
     }
 
-    // --- Hero icon ---
-    QIcon heroIcon = character->icon();
-    heroIcon.paint(painter, rects.heroIconRect, Qt::AlignCenter,
-                                    QIcon::Normal, QIcon::On);
-
-    // --- Initiative number ---
-    painter->setFont(StyleRepository::labelFont(14, true));
-    painter->setPen(ColorRepository::selectedForeground());
-    painter->drawText(rects.initiativeRect, Qt::AlignVCenter | Qt::AlignLeft,
-                      QString::number(character->initiative()));
-
-    // --- Name ---
-    painter->setFont(StyleRepository::labelFont(14, true));
-    painter->setPen(ColorRepository::text());
-    painter->drawText(rects.textRect, Qt::AlignVCenter | Qt::AlignLeft, character->text());
-
-    // --- Action icons ---
-    // No icon selector unlesss the active index and the active index is a character base class
-    if (isActiveIndex && isCharacter) { 
-        const QList<QIcon> actionIcons = IconRepository::actionIcons();
-        const int iconSize = static_cast<int>(rects.mainRowRect.height() * spec.iconSelectorIconScale);
-
-        for (int i = 0; i < rects.actionIconRects.size(); ++i) {
-            const QRect& iconRect = rects.actionIconRects[i];
-            bool selected = (static_cast<int>(character->actionType()) == i);
-            bool hovered  = iconRect.contains(localCursor);
-
-            PainterUtils::paintActionIcon(painter, actionIcons[i], iconRect, selected, hovered, iconSize);
-        }
-    }
-
-    // --- Delete button ---
-    PainterUtils::paintDeleteButton(painter, rects.deleteRect, rects.deleteRect.contains(localCursor));
-
-    // --- Expanded dropdown ---
-    if (isExpanded) {
-        switch (character->actionType()) {
-        case Cyrus::ActionType::Attack:
-            PainterUtils::paintAttackDropdown(painter, rects.dropdownRect, spec);
-            break;
-        case Cyrus::ActionType::Cast:
-            PainterUtils::paintCastDropdown(painter, *character, rects, castState);
-            break;
-        default:
-            break;
-        }
-    }
+    // --- Paint the layout ---
+    engine->paintLayout(
+        painter, 
+        layout, 
+        character, 
+        castState, 
+        isActiveIndex, 
+        isExpanded, 
+        localCursor
+    ); 
 
     painter->restore();
 }
@@ -137,66 +135,15 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         bool isExpanded    = checkExpanded(isActiveIndex, character);
         QPoint localCursor = cursorPosInItem(option, event);
 
-        InitiativeLayout::InitiativeRects rects =
-            InitiativeLayout::calculate(option.rect, character->layoutSpec(),
-                                        *character, isActiveIndex, isExpanded);
-        InitiativeLayout::HitTestResult hit =
-            InitiativeLayout::hitTest(rects, *character, localCursor);
-
         QUuid id = character->uuid();
-
         auto clamp = [](int v, int lo, int hi){ return std::max(lo, std::min(hi, v)); };
 
-        switch (hit.type) {
-            case InitiativeLayout::HitTestResult::DeleteButton:
-                qDebug() << "Delete button clicked for index " << index.row();
-                emit deleteItemClicked(index);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::ActionIcon:
-                //send event to the controller to update the model
-                emit iconSelectorClicked(index, static_cast<Cyrus::ActionType>(hit.actionIconIndex));
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::SpellEdit: {
-                if (auto* view = qobject_cast<InitiativeView*>(const_cast<QWidget*>(option.widget))) {
-                    qDebug() << "Editing spell at row" << index.row();
-                    view->editCustom(index);
-                }
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-            }
-            case InitiativeLayout::HitTestResult::CastingTimeMinus:
-                emit decrementCastingTimeClicked(id);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::CastingTimePlus:
-                emit incrementCastingTimeClicked(id);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::DurationMinus:
-                emit decrementDurationClicked(id);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::DurationPlus:
-                emit incrementDurationClicked(id);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::CastOk:
-                emit castSubmitted(id, *character);
-                emit iconSelectorClicked(index, Cyrus::ActionType::None);
-                if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-                return true;
-
-            case InitiativeLayout::HitTestResult::None:
-            default:
-                break;
+        auto* engine = LayoutFactory::forCharacter(*character);
+        auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
+        auto callback = engine->hitTest(index, layout, character, localCursor);
+        if(callback){
+            callback->execute();
+            return true;
         }
     }
 
@@ -274,11 +221,12 @@ void InitiativeDelegate::updateEditorGeometry(QWidget* editor,
     bool isExpanded    = checkExpanded(isActiveIndex, character);
 
     // calculate rects
-    InitiativeLayout::InitiativeRects rects = InitiativeLayout::calculate(option.rect, character->layoutSpec(),
-            *character, isActiveIndex, isExpanded);
+    const auto layout = LayoutFactory::forCharacter(*character)->calculate(option.rect, character, isActiveIndex, isExpanded);
+    // needs to be casted to character layout
+    const auto cLayout = std::static_pointer_cast<CharacterLayout>(layout);
 
     // Use your layout rect for the spell edit box
-    editor->setGeometry(rects.cast.spellEdit);
+    if(cLayout->cast && editor) editor->setGeometry(cLayout->cast->spellEdit);
 }
 
 
@@ -292,13 +240,12 @@ QSize InitiativeDelegate::sizeHint(const QStyleOptionViewItem& option,
         character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
     }
     character = charVar.value<std::shared_ptr<Character>>();
-    const Character::LayoutSpec spec = character->layoutSpec();
 
-    const int width     = InitiativeLayout::preferredWidth(spec, character);
+    const int width     = LayoutFactory::forCharacter(*character)->minimumWidth(character);
     bool isActiveIndex = checkActiveIndex(index, option);
     bool isExpanded    = checkExpanded(isActiveIndex, character);
-
-    int height = isExpanded ? 2 * spec.preferredHeight : spec.preferredHeight;
+    const int preferredHeight = character->layoutSpec().preferredHeight;
+    int height = isExpanded ? 2 * preferredHeight : preferredHeight;
     return QSize(width, height);
 }
 

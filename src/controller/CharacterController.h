@@ -60,6 +60,12 @@ public slots:
     void clearInitiativeOrder();
     void clearCombatLog();
 
+    //Roster delegate
+    void incrementRosterMemberInitiative(const QModelIndex& index);
+    void decrementRosterMemberInitiative(const QModelIndex& index);
+    void cloneRosterMember(const QModelIndex& index);
+    void deleteRosterMember(const QModelIndex& index);
+
 private:
     QHash<QUuid, CastState> states_; 
     InitiativeView* initiativeView_;

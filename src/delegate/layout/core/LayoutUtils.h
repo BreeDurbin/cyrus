@@ -1,5 +1,6 @@
 
 #pragma once
+
 #include <QRect>
 
 namespace LayoutUtils {
@@ -27,7 +28,7 @@ namespace LayoutUtils {
                      left.height());
     }
 
-    inline QRect buildDeleteRect(const QRect& base, int padding, double scale = 0.6) {
+    inline QRect buildDeleteRect(const QRect& base, int padding, double scale) {
         const int rectSize = static_cast<int>(base.height() * scale);
         return QRect(base.right() - rectSize - padding,
                      base.top() + (base.height() - rectSize) / 2,

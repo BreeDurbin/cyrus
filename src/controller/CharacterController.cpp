@@ -100,6 +100,31 @@ void CharacterController::castSubmitted(const QUuid& id, const Character& charac
     states_.remove(id);
 }
 
+
+// Update initiative of rostered characters
+
+void CharacterController::incrementRosterMemberInitiative(const QModelIndex& index) {
+    qDebug() << "Incrementing initiative.";
+    auto character = rosterModel_->getItem(index);
+    character->setInitiative(std::min(10, character->initiative() + 1));
+}
+
+void CharacterController::decrementRosterMemberInitiative(const QModelIndex& index) {
+    qDebug() << "Decrementing initiative.";
+    auto character = rosterModel_->getItem(index);
+    character->setInitiative(std::max(0, character->initiative() - 1));
+}
+
+// clone a rostered character
+void CharacterController::cloneRosterMember(const QModelIndex& index){
+    rosterModel_->appendItem(std::make_shared<Character>(rosterModel_->getItem(index)->clone()));
+}
+
+// delete a rostered character
+void CharacterController::deleteRosterMember(const QModelIndex& index){
+    rosterModel_->removeRow(index.row());
+}
+
 // Handlers triggered by buttons in the ui
 
 void CharacterController::addRosterToInitiative() {

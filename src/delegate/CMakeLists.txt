@@ -1,15 +1,28 @@
 add_library(
     delegate 
     STATIC
+    RosterDelegate.cpp
+    RosterDelegate.h
+    InitiativeDelegate.cpp
+    InitiativeDelegate.h    
     CombatLogDelegate.cpp
     CombatLogDelegate.h
-    InitiativeDelegate.cpp
-    InitiativeDelegate.h
-    layout/InitiativeLayout.cpp
-    layout/InitiativeLayout.h
-    layout/CombatLogLayout.h
-    PainterUtils.cpp
-    PainterUtils.h
+    layout/combat_log/CombatLogLayoutEngine.h
+    layout/core/LayoutFactory.cpp
+    layout/core/LayoutFactory.h
+    layout/core/LayoutEngine.h
+    layout/core/LayoutUtils.h
+    layout/core/PainterUtils.cpp
+    layout/core/PainterUtils.h
+    layout/core/Stepper.h
+    layout/initiative_order/CharacterLayoutEngine.cpp
+    layout/initiative_order/CharacterLayoutEngine.h
+    layout/initiative_order/AttackActionLayoutEngine.cpp
+    layout/initiative_order/AttackActionLayoutEngine.h
+    layout/initiative_order/CastActionLayoutEngine.cpp
+    layout/initiative_order/CastActionLayoutEngine.h
+    layout/roster/RosterLayoutEngine.cpp
+    layout/roster/RosterLayoutEngine.h
 )
 
 target_include_directories(
@@ -17,6 +30,10 @@ target_include_directories(
     PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/layout
+    ${CMAKE_CURRENT_SOURCE_DIR}/layout/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/layout/combat_log
+    ${CMAKE_CURRENT_SOURCE_DIR}/layout/initiative_order
+    ${CMAKE_CURRENT_SOURCE_DIR}/layout/roster
 )
 
 target_link_libraries(

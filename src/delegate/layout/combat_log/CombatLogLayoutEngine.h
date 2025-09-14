@@ -1,15 +1,15 @@
 #include <memory>
 #include "Character.h"
+#include "LayoutUtils.h"
 
-class CombatLogLayout{
+class CombatLogLayoutEngine {
 
     public:
 
     // preferred width accounting for wrap at given max text width
-    static int preferredWidth(const Character::LayoutSpec& spec,
-                              const std::shared_ptr<Character>& character,
-                              int maxTextWidth = 300) // optional wrap width
+    static int minimumWidth(const std::shared_ptr<Character>& character, int maxTextWidth = 300) // optional wrap width
     {
+        auto spec = character->layoutSpec();
         // Base rect with arbitrary height
         QRect baseRect(0, 0, 1000, spec.preferredHeight);
 
