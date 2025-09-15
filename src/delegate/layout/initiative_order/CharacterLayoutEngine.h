@@ -22,6 +22,7 @@ struct CastRects {
 };
 
 struct AttackRects {
+    QRect attackAmountFrame;
     StepperRects attackAmountStepperRects;
     QRect submitButtonRect;
 };
@@ -64,7 +65,7 @@ struct CharacterLayoutEngine : LayoutEngine {
             QPainter* painter,
             const std::shared_ptr<Layout>& layout,
             const std::shared_ptr<Character>& character,
-            const CastState& castState,
+            const CastState castState,
             bool isActiveIndex,
             bool isExpanded,
             const QPoint& localCursor ) const override;
@@ -78,9 +79,12 @@ struct CharacterLayoutEngine : LayoutEngine {
         void incrementCastingTimeClicked(const QUuid& id);
         void decrementDurationClicked(const QUuid& id);
         void incrementDurationClicked(const QUuid& id);
-        void castSubmitted(const QUuid& id, const Character& character);
+        void castSubmitClicked(const QUuid& id, const std::shared_ptr<Character>& character);
         void deleteItemClicked(const QModelIndex& index) const; // delete button clicked
         void iconSelectorClicked(const QModelIndex& index, Cyrus::ActionType actionType); // icon selector hit
+        void decrementAttackAmountClicked(const QModelIndex& index);
+        void incrementAttackAmountClicked(const QModelIndex& index);
+        void attackSubmitClicked(const QModelIndex& index);
 
     private:
 
@@ -90,8 +94,8 @@ struct CharacterLayoutEngine : LayoutEngine {
         static QVector<QRect> buildActionIconRects(const QRect& iconSelectorRect,
                                                 int rowHeight,
                                                 const Character::LayoutSpec& spec);
-        static QRect buildMainRowRect(const QRect& base, bool isExpanded);
-        static QRect buildDropdownRect(const QRect& baseRect);
+        static QRect buildMainRowRect(const QRect& base, bool isExpanded, int padding);
+        static QRect buildDropdownRect(const QRect& base, const QRect& mainRow, int padding);
         static StepperRects buildStepperRects(const QRect& frame,
                                             int buttonW, int valueW,
                                             int h, int padding);
@@ -109,12 +113,14 @@ struct CharacterLayoutEngine : LayoutEngine {
         void paintAttackDropdown(QPainter* painter,
                             const QRect& dropdownRect,
                             const AttackRects& attack,
-                            const Character::LayoutSpec& spec) const;
+                            const std::shared_ptr<Character>& character,
+                            const QPoint& localCursor) const;
 
         void paintCastDropdown(QPainter* painter,
                             const QRect& dropdownRect,
                             const CastRects& cast,
-                            const CastState& castState) const;
+                            const CastState& castState,
+                            const QPoint& localCursor) const;
 
 };   
 

@@ -102,6 +102,7 @@ Qt::ItemFlags CharacterModel::flags(const QModelIndex &index) const {
 }
 
 void CharacterModel::sort(int /*column*/, Qt::SortOrder order) {
+    beginResetModel(); // informs the view the whole model is changing
     if(order == Qt::AscendingOrder){
         std::sort(items_.begin(), items_.end(),
             [](const std::shared_ptr<Character>& lhs, const std::shared_ptr<Character>& rhs){
@@ -113,7 +114,7 @@ void CharacterModel::sort(int /*column*/, Qt::SortOrder order) {
                 return lhs->initiative() > rhs->initiative();
             });
     }
-    emit dataChanged(index(0, 0), index(items_.size() - 1, 0), {Qt::DisplayRole});
+    endResetModel(); // emits layoutChanged, resets selection, etc.
 }
 
 bool CharacterModel::removeRows(int row, int count, const QModelIndex &parent) {

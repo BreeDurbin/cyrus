@@ -39,9 +39,9 @@ class AttackAction : public Character {
     QString combatLog() const override;
     QString actionName() const { return actionName_; }
     LayoutSpec layoutSpec() const override {
-        return LayoutSpec{5, 12, 70, 0.8, 30, 0.6, 0.8, 0.8}; 
-        // padding=5, radius=12, preferred height=70px, hero icon=80% height, initiative=30px, 
-        // icon selector icon scale = 60%, delete rect icon scale = 80%, submit rect icon scale = 80%
+        return LayoutSpec{10, 12, 70, 0.9, 30, 0.6, 0.6, 0.6, 0.6}; 
+        // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, 
+        // icon selector icon scale = 60%, clone rect icon scale = 80%, submit rect icon scale = 80%, delete rect icon scale = 80%
     };
 
     static QString logEntryFor(Cyrus::ActionType type) {

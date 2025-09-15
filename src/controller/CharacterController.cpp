@@ -6,6 +6,7 @@
 #include "TomlHelper.h"
 #include "Enums.h"
 #include "CastState.h"
+#include <QTimer>
 
 
 CharacterController::CharacterController(InitiativeView* initiativeView,
@@ -53,51 +54,106 @@ void CharacterController::updateAction(const QModelIndex& index, Cyrus::ActionTy
 }
 
 void CharacterController::deleteItem(const QModelIndex& index) {
-    //for now just assume the item to be deleted is in initiative model
+    if (!index.isValid()) return;
+
+    // Advance initiative only if the deleted item is the active one
+    QModelIndex active = initiativeView_->activeIndex();
+    if (active.isValid() && active == index) {
+        advanceInitiative();
+    }
+
     initiativeOrderModel_->removeRow(index.row());
 }
 
-// update controller cached state
+// cast actions
 
 void CharacterController::setSpellName(const QUuid& id, const QString& name) {
     qDebug() << "CharacterController setting spell name.";
-    auto& castState = states_[id];
+    auto& castState = states_[id]; // creates new CastState if id doesn't exist
     castState.spellName = name;
 }
 
 void CharacterController::decrementCastingTime(const QUuid& id) {
     qDebug() << "Decrementing casting time.";
-    auto& castState = states_[id];
+    auto& castState = states_[id]; // creates new CastState if id doesn't exist
     castState.castingTime = std::max(0, castState.castingTime - 1);
 }
 
 void CharacterController::incrementCastingTime(const QUuid& id) {
     qDebug() << "Incrementing casting time.";
-    auto& castState = states_[id];
+    auto& castState = states_[id]; // creates new CastState if id doesn't exist
     castState.castingTime = std::min(10, castState.castingTime + 1);
 }
 
 void CharacterController::decrementDuration(const QUuid& id) {
     qDebug() << "Decrementing duration.";
-    auto& castState = states_[id];
+    auto& castState = states_[id]; // creates new CastState if id doesn't exist
     castState.duration = std::max(0, castState.duration - 1);
 }
 
 void CharacterController::incrementDuration(const QUuid& id) {
     qDebug() << "Incrementing duration.";
-    auto& castState = states_[id];
+    auto& castState = states_[id]; // creates new CastState if id doesn't exist
     castState.duration = std::min(99, castState.duration + 1);
 }
 
-void CharacterController::castSubmitted(const QUuid& id, const Character& character){
-    CastState castState = states_[id];
+void CharacterController::castSubmitted(const QUuid& id, const std::shared_ptr<Character>& character){
+    qDebug() << "Handling cast submitted.";
 
-    // Create a new spell action card cast by the submitting char
-    std::shared_ptr<CastAction> castAction = std::make_shared<CastAction>(character.name(), character.initiative(), 
-            character.characterType(), castState.spellName, castState.castingTime, castState.duration);
+    if (!character) {
+        qWarning() << "castSubmitted called with null character";
+        return;
+    }
+
+    if (!states_.contains(id)) {
+        qWarning() << "castSubmitted called for unknown id:" << id;
+        return;
+    }
+
+    // Copy the state first
+    auto castState = states_.value(id);
+
+    auto castAction = std::make_shared<CastAction>(
+        character->name(),
+        character->initiative(),
+        character->characterType(),
+        castState.spellName,
+        castState.castingTime,
+        castState.duration
+    );
+
     initiativeOrderModel_->appendItem(castAction);
     initiativeOrderModel_->sort();
-    states_.remove(id);
+
+    // Defer removal to next event loop cycle to avoid dangling references
+    QTimer::singleShot(0, [this, id](){ 
+        qDebug() << "Removing state for" << id;
+        states_.remove(id); 
+    });
+}
+
+// Attack actions
+
+void CharacterController::decrementAttackAmount(const QModelIndex& index){
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    qDebug() << "Decrementing attack rate for character: " << character->name();
+    AttackRate ar = character->attackRate();
+    character->setAttackRate(--ar);
+}
+
+void CharacterController::incrementAttackAmount(const QModelIndex& index){
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    qDebug() << "Incrementing attack rate for character: " << character->name();
+    AttackRate ar = character->attackRate();
+    character->setAttackRate(++ar);
+}
+
+void CharacterController::attackSubmitted(const QModelIndex& index){
+    auto character = initiativeOrderModel_->getItem(index);
+    auto attackRate = character->attackRate();
+    qDebug() << "Handling attack Submitted for character " << character->name();
 }
 
 

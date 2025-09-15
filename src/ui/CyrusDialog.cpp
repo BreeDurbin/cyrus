@@ -72,7 +72,7 @@ CyrusDialog::~CyrusDialog()
 
 void CyrusDialog::setupMainDialog() {
 
-    setWindowIcon(IconRepository::miniCyrus());
+    setWindowIcon(IconRepository::miniCyrus_icon());
     setStyleSheet(StyleRepository::mainWindow());
     //setStyleSheet("#CyrusDialog { border-image: url(:/image/background4.png) 0 0 0 0 stretch fixed;}");
     layout()->activate();
@@ -133,13 +133,13 @@ void CyrusDialog::setupButtons() {
     //scale up the icon a little bit, this will expand and resize the container
     int height = 1.15 * ui->saveButton->parentWidget()->height(); // same for both save and load icons
 
-    QIcon saveIcon = IconRepository::save();
+    QIcon saveIcon = IconRepository::save_icon();
     ui->saveButton->setIcon(saveIcon);
     ui->saveButton->setFixedSize(height, height);
     ui->saveButton->setIconSize(QSize(height, height));
     ui->saveButton->setStyleSheet(StyleRepository::iconPushButton());
 
-    QIcon loadIcon = IconRepository::load();
+    QIcon loadIcon = IconRepository::load_icon();
     ui->loadButton->setIcon(loadIcon);
     ui->loadButton->setFixedSize(height, height);
     ui->loadButton->setIconSize(QSize(height, height));
@@ -307,38 +307,52 @@ void CyrusDialog::setupConnections(){
 
 
     // Connect signals from initiative delegate to characterController_
-    connect(initiativeDelegate_, &InitiativeDelegate::deleteItemClicked,
+
+    //Cast actions
+    connect(initiativeDelegate_, &InitiativeDelegate::deleteItem,
         characterController_, &CharacterController::deleteItem);
     
     connect(initiativeDelegate_, &InitiativeDelegate::spellNameEdited,
         characterController_, &CharacterController::setSpellName);
 
-    connect(initiativeDelegate_, &InitiativeDelegate::iconSelectorClicked,
+    connect(initiativeDelegate_, &InitiativeDelegate::iconSelected,
             characterController_, &CharacterController::updateAction);
 
-    connect(initiativeDelegate_, &InitiativeDelegate::decrementCastingTimeClicked,
+    connect(initiativeDelegate_, &InitiativeDelegate::decrementCastingTime,
             characterController_, &CharacterController::decrementCastingTime);
 
-    connect(initiativeDelegate_, &InitiativeDelegate::incrementCastingTimeClicked,
+    connect(initiativeDelegate_, &InitiativeDelegate::incrementCastingTime,
             characterController_, &CharacterController::incrementCastingTime);
 
-    connect(initiativeDelegate_, &InitiativeDelegate::decrementDurationClicked,
+    connect(initiativeDelegate_, &InitiativeDelegate::decrementDuration,
             characterController_, &CharacterController::decrementDuration);
 
-    connect(initiativeDelegate_, &InitiativeDelegate::incrementDurationClicked,
+    connect(initiativeDelegate_, &InitiativeDelegate::incrementDuration,
             characterController_, &CharacterController::incrementDuration);
 
     connect(initiativeDelegate_, &InitiativeDelegate::castSubmitted,
             characterController_, &CharacterController::castSubmitted);
 
-    //Connect signals for roster delegate to characterController_
+    // Attack actions
+    connect(initiativeDelegate_, &InitiativeDelegate::decrementAttackAmount,
+            characterController_, &CharacterController::decrementAttackAmount);
 
+    connect(initiativeDelegate_, &InitiativeDelegate::incrementAttackAmount,
+            characterController_, &CharacterController::incrementAttackAmount);
+
+    connect(initiativeDelegate_, &InitiativeDelegate::attackSubmitted,
+            characterController_, &CharacterController::attackSubmitted);
+
+    //Connect signals for roster delegate to characterController_
     connect(rosterDelegate_,      &RosterDelegate::incrementRosterMemberInitiativeClicked,
             characterController_, &CharacterController::incrementRosterMemberInitiative);
+
     connect(rosterDelegate_,      &RosterDelegate::decrementRosterMemberInitiativeClicked,
             characterController_, &CharacterController::decrementRosterMemberInitiative);
+
     connect(rosterDelegate_,      &RosterDelegate::cloneRosterMemberClicked,
             characterController_, &CharacterController::cloneRosterMember);
+            
     connect(rosterDelegate_,      &RosterDelegate::deleteButtonClicked,
             characterController_, &CharacterController::deleteRosterMember);
 

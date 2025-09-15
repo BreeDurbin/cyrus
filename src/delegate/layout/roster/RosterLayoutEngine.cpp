@@ -10,6 +10,7 @@
 #include "Stepper.h"
 #include "StyleRepository.h"
 #include "ColorRepository.h"
+#include <QApplication>
 
 
 std::shared_ptr<Layout> RosterLayoutEngine::calculate(
@@ -19,16 +20,13 @@ std::shared_ptr<Layout> RosterLayoutEngine::calculate(
     bool isExpanded) const
 {
     auto spec = character->layoutSpec();
+    int padding = spec.padding;
 
     auto layout = std::make_shared<RosterLayout>();
     layout->baseRect = LayoutUtils::padRectangle(rect, spec.padding);
+    int rowHeight = layout->baseRect.height();
 
-    // --- Hero icon ---
-    layout->heroIconRect = LayoutUtils::buildHeroIconRect(layout->baseRect, spec.heroIconScale);
-    layout->heroIconRect.moveTop(layout->baseRect.top() +
-                              (layout->baseRect.height() - layout->heroIconRect.height()) / 2);
-
-    // --- Initiative stepper ---
+    // Local vars
     int controlHeight       = static_cast<int>(layout->baseRect.height() * 0.6);   // 60% of row
     int stepperButtonWidth  = controlHeight;                                    // square buttons
     int stepperValueWidth   = static_cast<int>(controlHeight * 1.5);            // wider value
@@ -36,12 +34,19 @@ std::shared_ptr<Layout> RosterLayoutEngine::calculate(
                               stepperValueWidth + spec.padding +
                               stepperButtonWidth;
 
-    layout->initiativeFrame = LayoutUtils::buildInitiativeRect(layout->heroIconRect,
-                                                           spec.padding,
-                                                           stepperWidth);
-    layout->initiativeFrame.setTop(layout->baseRect.top() +
-                                (layout->baseRect.height() - controlHeight) / 2);
-    layout->initiativeFrame.setHeight(controlHeight);
+    LayoutUtils::LeftAnchorBuilder left(layout->baseRect);
+    LayoutUtils::RightAnchorBuilder right(layout->baseRect);
+
+    //Hero Icon
+    layout->heroIconRect     = left.icon(spec.heroIconScale, padding);
+
+    // delete button
+    layout->deleteButtonRect = right.icon(spec.deleteButtonScale, padding);
+    
+    // clone button
+    layout->cloneButtonRect  = right.icon(spec.cloneButtonScale, padding);
+
+    layout->initiativeFrame = left.control(stepperWidth, rowHeight, padding);
 
     layout->initiativeStepperRects = Stepper::buildStepperRects(
         layout->initiativeFrame,
@@ -51,21 +56,8 @@ std::shared_ptr<Layout> RosterLayoutEngine::calculate(
         spec.padding
     );
 
-    // --- Delete button ---
-    layout->deleteButtonRect = LayoutUtils::buildDeleteRect(layout->baseRect,
-                                                        spec.padding,
-                                                        spec.deleteButtonScale);
-    layout->deleteButtonRect.moveTop(layout->baseRect.top() +
-                                  (layout->baseRect.height() - layout->deleteButtonRect.height()) / 2);
-
-    // --- Clone button ---
-    layout->cloneButtonRect = layout->deleteButtonRect;
-    layout->cloneButtonRect.moveLeft(layout->deleteButtonRect.left() - spec.padding - layout->cloneButtonRect.width());
-
     // --- Text rect ---
-    layout->textRect = LayoutUtils::buildTextRect(layout->initiativeFrame,
-                                               layout->cloneButtonRect,
-                                               spec.padding);
+    layout->textRect = left.text(layout->cloneButtonRect.left() - layout->initiativeFrame.right(), padding);
 
     return layout;
 }
@@ -84,20 +76,20 @@ std::optional<HitCommand> RosterLayoutEngine::hitTest(
 
     // --- Delete button ---
     if (rosterLayout->deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this]() { emit deleteButtonClicked(index); } };
+        return HitCommand{ [index, this](QListView* /*view*/) { emit deleteButtonClicked(index); } };
     }
 
     // --- Clone button ---
     if (rosterLayout->cloneButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this]() { emit cloneRosterMemberClicked(index); } };
+        return HitCommand{ [index, this](QListView* /*view*/) { emit cloneRosterMemberClicked(index); } };
     }
 
     // --- Initiative stepper ---
     if (rosterLayout->initiativeStepperRects.plusRect.contains(cursorPos)) {
-        return HitCommand{ [index, this]() { emit incrementRosterMemberInitiativeClicked(index); } };
+        return HitCommand{ [index, this](QListView* /*view*/) { emit incrementRosterMemberInitiativeClicked(index); } };
     }
     if (rosterLayout->initiativeStepperRects.minusRect.contains(cursorPos)) {
-        return HitCommand{ [index, this]() { emit decrementRosterMemberInitiativeClicked(index); } };
+        return HitCommand{ [index, this](QListView* /*view*/) { emit decrementRosterMemberInitiativeClicked(index); } };
     }
 
     return std::nullopt;
@@ -108,7 +100,7 @@ void RosterLayoutEngine::paintLayout(
     QPainter* painter,
     const std::shared_ptr<Layout>& layout,
     const std::shared_ptr<Character>& character,
-    const CastState& castState,
+    const CastState castState,
     bool isActiveIndex,
     bool isExpanded,
     const QPoint& localCursor) const
@@ -119,6 +111,7 @@ void RosterLayoutEngine::paintLayout(
     }
 
     painter->save();
+    auto spec = character->layoutSpec();
 
     // --- Background highlight ---
     if (isActiveIndex) {
@@ -133,7 +126,7 @@ void RosterLayoutEngine::paintLayout(
                    QIcon::Normal, QIcon::On);
     
     // --- Initiative stepper ---
-    PainterUtils::paintStepper(
+    Stepper::paintStepper(
         painter,
         rosterLayout->initiativeStepperRects,
         character->initiative()
@@ -142,19 +135,29 @@ void RosterLayoutEngine::paintLayout(
     // --- Name ---
     painter->setFont(StyleRepository::labelFont(14, true));
     painter->setPen(ColorRepository::text());
-    painter->drawText(rosterLayout->textRect, Qt::AlignVCenter | Qt::AlignLeft,
-                      character->text());
-
+    painter->drawText(rosterLayout->textRect, Qt::AlignVCenter | Qt::AlignLeft, character->text());
 
     // --- Clone button ---
-    QIcon cloneIcon = IconRepository::clone();
-    cloneIcon.paint(painter, rosterLayout->cloneButtonRect);
+    PainterUtils::paintIcon(
+        painter,
+        IconRepository::clone_icon(),
+        rosterLayout->cloneButtonRect,
+        false,
+        false,
+        rosterLayout->cloneButtonRect.contains(localCursor),
+        rosterLayout->cloneButtonRect.height()
+    );
 
     // --- Delete button ---
-    PainterUtils::paintDeleteButton(
+    const int deleteIconSize = static_cast<int>(rosterLayout->baseRect.height() * spec.deleteButtonScale);
+    PainterUtils::paintIcon(
         painter,
+        IconRepository::delete_icon(),
         rosterLayout->deleteButtonRect,
-        rosterLayout->deleteButtonRect.contains(localCursor)
+        false,
+        false,
+        rosterLayout->deleteButtonRect.contains(localCursor),
+        rosterLayout->deleteButtonRect.height()
     );
 
     painter->restore();

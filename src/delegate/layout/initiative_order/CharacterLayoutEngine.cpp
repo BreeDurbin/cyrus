@@ -10,51 +10,69 @@
 #include "StyleRepository.h"
 #include <QPainter>
 #include "PainterUtils.h"
+#include "InitiativeView.h"
+#include <QApplication>
 
 // ----------------- Public API -----------------
 
 std::shared_ptr<Layout> CharacterLayoutEngine::calculate(
-                            const QRect& rect,
-                            const std::shared_ptr<Character>& character,
-                            bool isActiveIndex,
-                            bool isExpanded) const {
-                                
+    const QRect& rect,
+    const std::shared_ptr<Character>& character,
+    bool isActiveIndex,
+    bool isExpanded) const 
+{
     CharacterLayout layout;
     auto spec = character->layoutSpec();
+    int padding = spec.padding;
 
-    // base + rows
-    layout.baseRect     = LayoutUtils::padRectangle(rect, spec.padding);
-    layout.mainRowRect  = buildMainRowRect(layout.baseRect, isExpanded);
-    layout.dropdownRect = isExpanded ? buildDropdownRect(layout.baseRect) : QRect();
+    // --- base + rows ---
+    layout.baseRect     = LayoutUtils::padRectangle(rect, padding); //unpadded, used to build the top and bottom row rects
+    layout.mainRowRect  = buildMainRowRect(rect, isExpanded, padding);
+    layout.dropdownRect = isExpanded ? buildDropdownRect(rect, layout.mainRowRect, padding) : QRect();
 
-    // icon + controls
-    layout.top.heroIconRect         = LayoutUtils::buildHeroIconRect(layout.mainRowRect, spec.heroIconScale);
-    layout.top.initiativeRect       = LayoutUtils::buildInitiativeRect(layout.top.heroIconRect, spec.padding, spec.initiativeWidth);
-    layout.top.deleteButtonRect     = LayoutUtils::buildDeleteRect(layout.mainRowRect, spec.padding, spec.deleteButtonScale);
+    qDebug() << "Main row rect collapsed: " << buildMainRowRect(rect, false, padding);
+    qDebug() << "Main row rect expanded: " << buildMainRowRect(rect, true, padding);
 
-    // right-hand controls
-    layout.top.iconSelectorRect = isActiveIndex
-        ? buildIconSelectorRect(layout.top.deleteButtonRect, layout.mainRowRect.height(), spec)
-        : QRect();
-    layout.top.rightAnchorRect = isActiveIndex ? layout.top.iconSelectorRect : layout.top.deleteButtonRect;
+    // --- left-hand controls (hero + initiative) ---
+    LayoutUtils::LeftAnchorBuilder left(layout.mainRowRect);
+    layout.top.heroIconRect   = left.icon(spec.heroIconScale, padding);
+    layout.top.initiativeRect = left.text(spec.initiativeWidth, spec.padding);
 
-    // text
-    layout.top.textRect = LayoutUtils::buildTextRect(layout.top.initiativeRect, layout.top.rightAnchorRect, spec.padding);
 
-    // action icons
+    // --- right-hand controls (delete, optional icon selector) ---
+    LayoutUtils::RightAnchorBuilder right(layout.mainRowRect);
+    layout.top.deleteButtonRect = right.icon(spec.deleteButtonScale, padding);
+
     if (isActiveIndex) {
+        const QList<QIcon> icons = IconRepository::actionIcons();
+        const int iconCount = icons.size();
+        const int iconSize  = static_cast<int>(layout.mainRowRect.height() * spec.iconSelectorIconScale);
+        const int totalW    = iconCount * iconSize + (iconCount - 1) * padding;
+
+        layout.top.iconSelectorRect = right.control(totalW, iconSize, padding);
+        layout.top.rightAnchorRect = layout.top.iconSelectorRect;
         layout.top.actionIconRects = buildActionIconRects(layout.top.iconSelectorRect, layout.mainRowRect.height(), spec);
+    } else {
+        layout.top.iconSelectorRect = QRect();
+        layout.top.rightAnchorRect  = layout.top.deleteButtonRect;
     }
 
-    if(isExpanded){
-        // attack dropdown
-        if (character->actionType() == Cyrus::ActionType::Attack) layout.attack = buildAttackRects(layout.dropdownRect, spec);
-        // cast dropdown
-        if (character->actionType() == Cyrus::ActionType::Cast) layout.cast = buildCastRects(layout.dropdownRect, spec);
+    // --- text ---
+    layout.top.textRect = left.text(layout.top.rightAnchorRect.left() - layout.top.initiativeRect.right(), spec.padding);
+
+    // --- dropdowns (expanded state) ---
+    if (isExpanded) {
+        if (character->actionType() == Cyrus::ActionType::Attack) {
+            layout.attack = buildAttackRects(layout.dropdownRect, spec);
+        }
+        if (character->actionType() == Cyrus::ActionType::Cast) {
+            layout.cast = buildCastRects(layout.dropdownRect, spec);
+        }
     }
 
     return std::make_shared<CharacterLayout>(layout);
 }
+
 
 
 std::optional<HitCommand> CharacterLayoutEngine::hitTest(
@@ -67,7 +85,8 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
 
     // Delete button
     if (cLayout->top.deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this]() {
+        return HitCommand{ [index, this](QListView* /*view*/) {
+            qDebug() << "Delete button clicked.";
             emit deleteItemClicked(index);
         }};
     }
@@ -75,7 +94,7 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
     // Action icons
     for (int actionIconIndex = 0; actionIconIndex < cLayout->top.actionIconRects.size(); ++actionIconIndex) {
         if (cLayout->top.actionIconRects[actionIconIndex].contains(cursorPos)) {
-            return HitCommand{ [index, actionIconIndex, this]() {
+            return HitCommand{ [index, actionIconIndex, this](QListView* /*view*/) {
                 qDebug() << "Action Icon " << QString::number(actionIconIndex) << " clicked.";
                 emit iconSelectorClicked(index, static_cast<Cyrus::ActionType>(actionIconIndex));
             }};
@@ -85,22 +104,53 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
     // Cast actions
     if (character->actionType() == Cyrus::ActionType::Cast && cLayout->cast) {
         auto& cast = *cLayout->cast;
-
+        if (cast.spellEdit.contains(cursorPos)) {
+            qDebug() << "Cast spell edit clicked." << id << " index " << index.row();
+            return HitCommand{ [index, this](QListView* view) { 
+                if (auto* initiativeView = qobject_cast<InitiativeView*>(view)){;
+                    initiativeView->editCustom(index);
+                }
+            }};
+        }
         if (cast.castingTimeStepperRects.minusRect.contains(cursorPos)) {
-            return HitCommand{ [id, this]() { emit decrementCastingTimeClicked(id); } };
+            qDebug() << "Cast casting time minus button clicked." << id << " index " << index.row();
+            return HitCommand{ [id, this](QListView* /*view*/) { emit decrementCastingTimeClicked(id); } };
         }
         if (cast.castingTimeStepperRects.plusRect.contains(cursorPos)) {
-            return HitCommand{ [id, this]() { emit incrementCastingTimeClicked(id); } };
+            qDebug() << "Cast casting time plus button clicked." << id << " index " << index.row();
+            return HitCommand{ [id, this](QListView* /*view*/) { emit incrementCastingTimeClicked(id); } };
         }
         if (cast.durationStepperRects.minusRect.contains(cursorPos)) {
-            return HitCommand{ [id, this]() { emit decrementDurationClicked(id); } };
+            qDebug() << "Cast duration minus button clicked." << id << " index " << index.row();
+            return HitCommand{ [id, this](QListView* /*view*/) { emit decrementDurationClicked(id); } };
         }
         if (cast.durationStepperRects.plusRect.contains(cursorPos)) {
-            return HitCommand{ [id, this]() { emit incrementDurationClicked(id); } };
+            qDebug() << "Cast duration plus button clicked." << id << " index " << index.row();
+            return HitCommand{ [id, this](QListView* /*view*/) { emit incrementDurationClicked(id); } };
         }
         if (cast.submitButtonRect.contains(cursorPos)) {
-            return HitCommand{ [id, index, this, character]() {
-                emit castSubmitted(id, *character);
+            qDebug() << "Cast submit button clicked." << id << " index " << index.row();
+            return HitCommand{ [id, index, this, character](QListView* /*view*/) {
+                emit castSubmitClicked(id, character);
+                //emit iconSelectorClicked(index, Cyrus::ActionType::None);
+            }};
+        }
+    }
+
+    // Attack actions
+    if (character->actionType() == Cyrus::ActionType::Attack && cLayout->attack) {
+        auto& attack = *cLayout->attack;
+
+        if (attack.attackAmountStepperRects.minusRect.contains(cursorPos)) {
+            return HitCommand{ [index, this](QListView* /*view*/) { emit decrementAttackAmountClicked(index); } };
+        }
+        if (attack.attackAmountStepperRects.plusRect.contains(cursorPos)) {
+            return HitCommand{ [index, this](QListView* /*view*/) { emit incrementAttackAmountClicked(index); } };
+        }
+        if (attack.submitButtonRect.contains(cursorPos)) {
+            qDebug() << "Attack submit button clicked.";
+            return HitCommand{ [index, this, character](QListView* /*view*/) {
+                emit attackSubmitClicked(index);
                 emit iconSelectorClicked(index, Cyrus::ActionType::None);
             }};
         }
@@ -113,7 +163,7 @@ void CharacterLayoutEngine::paintLayout(
         QPainter* painter,
         const std::shared_ptr<Layout>& layout,
         const std::shared_ptr<Character>& character,
-        const CastState& castState,
+        const CastState castState,
         bool isActiveIndex,
         bool isExpanded,
         const QPoint& localCursor) const {
@@ -121,13 +171,7 @@ void CharacterLayoutEngine::paintLayout(
     auto cLayout = std::static_pointer_cast<CharacterLayout>(layout);
     auto spec = character->layoutSpec();
 
-    //Debugging for rect size
-    qDebug() << "Dropdown rect:" << cLayout->dropdownRect;
-    if (cLayout->cast)
-        qDebug() << "Cast rects:" << cLayout->cast->castingTimeStepperRects.minusRect
-                << cLayout->cast->castingTimeStepperRects.valueRect
-                << cLayout->cast->castingTimeStepperRects.plusRect
-                << cLayout->cast->submitButtonRect;
+    bool isPressed = QApplication::mouseButtons() & Qt::LeftButton;
 
     // --- Hero icon ---
     QIcon heroIcon = character->icon();
@@ -147,22 +191,27 @@ void CharacterLayoutEngine::paintLayout(
                       character->text());
 
     // --- Delete button ---
-    PainterUtils::paintDeleteButton(painter,
-                                    cLayout->top.deleteButtonRect,
-                                    cLayout->top.deleteButtonRect.contains(localCursor));
+    PainterUtils::paintIcon(
+        painter,
+        IconRepository::delete_icon(),
+        cLayout->top.deleteButtonRect,
+        false,
+        cLayout->top.deleteButtonRect.contains(localCursor),
+        cLayout->top.deleteButtonRect.contains(localCursor) && isPressed,
+        cLayout->top.deleteButtonRect.height()
+    );
 
     // --- Action icons ---
     bool isBaseCharacter = checkIfCharacter(character);
     if (isActiveIndex && isBaseCharacter) {
         const QList<QIcon> actionIcons = IconRepository::actionIcons();
-        const int iconSize = static_cast<int>(cLayout->mainRowRect.height() * spec.iconSelectorIconScale);
 
         for (int i = 0; i < cLayout->top.actionIconRects.size(); ++i) {
             const QRect& iconRect = cLayout->top.actionIconRects[i];
             bool selected = (static_cast<int>(character->actionType()) == i);
             bool hovered  = iconRect.contains(localCursor);
-
-            PainterUtils::paintActionIcon(painter, actionIcons[i], iconRect, selected, hovered, iconSize);
+            bool iconPressed = hovered && isPressed;
+            PainterUtils::paintIcon(painter, actionIcons[i], iconRect, selected, hovered, iconPressed, iconRect.height());
         }
     }
 
@@ -170,10 +219,10 @@ void CharacterLayoutEngine::paintLayout(
     if (isExpanded) {
         switch (character->actionType()) {
             case Cyrus::ActionType::Attack:
-                if (cLayout->attack) paintAttackDropdown(painter, cLayout->dropdownRect, cLayout->attack.value(), spec);
+                if (cLayout->attack) paintAttackDropdown(painter, cLayout->dropdownRect, cLayout->attack.value(), character, localCursor);
                 break;
             case Cyrus::ActionType::Cast:
-                if (cLayout->cast) paintCastDropdown(painter, cLayout->dropdownRect, cLayout->cast.value(), castState);
+                if (cLayout->cast) paintCastDropdown(painter, cLayout->dropdownRect, cLayout->cast.value(), castState, localCursor);
                 break;
             default:
                 break;
@@ -189,20 +238,48 @@ int CharacterLayoutEngine::minimumWidth(
     return minimumCastRowWidth(*character);
 }
 
-// ----------------- Icon selector + rows -----------------
-QRect CharacterLayoutEngine::buildIconSelectorRect(const QRect& deleteRect, int rowHeight,
-                                              const Character::LayoutSpec& spec) {
-    const QList<QIcon> icons = IconRepository::actionIcons();
-    if (icons.isEmpty()) return QRect();
+//---------- Helpers -----------------
 
-    const int iconCount = icons.size();
-    const int iconSize  = static_cast<int>(rowHeight * spec.iconSelectorIconScale);
-    const int totalW    = iconCount * iconSize + (iconCount - 1) * spec.padding;
+QRect CharacterLayoutEngine::buildMainRowRect(const QRect& base, bool isExpanded, int padding) {
+    QRect rowRect;
 
-    return QRect(deleteRect.left() - totalW - spec.padding,
-                 deleteRect.top() + (deleteRect.height() - iconSize) / 2,
-                 totalW, iconSize);
+    if (isExpanded) {
+        // Take the top half of the base rect
+        rowRect = QRect(
+            base.left(),
+            base.top(),
+            base.width(),
+            base.height() / 2
+        );
+    } else {
+        // Use the full height when collapsed
+        rowRect = base;
+    }
+
+    // Apply horizontal and vertical padding
+    rowRect.adjust(2 * padding, padding, -(2 * padding), -padding);
+
+    return rowRect;
 }
+
+QRect CharacterLayoutEngine::buildDropdownRect(const QRect& base, const QRect& mainRow, int padding) {
+    // Remaining space below mainRow
+    if (mainRow.bottom() >= base.bottom()) return QRect(); // no space for dropdown
+
+    QRect dropdown(
+        base.left(),
+        mainRow.bottom(),
+        base.width(),
+        base.bottom() - mainRow.bottom()
+    );
+
+    // Apply horizontal and vertical padding
+    dropdown.adjust(2 * padding, padding, -(2 * padding), -padding);
+
+    return dropdown;
+}
+
+// ----------------- Icon selector + rows -----------------
 
 QVector<QRect> CharacterLayoutEngine::buildActionIconRects(const QRect& iconSelectorRect,
                                        int rowHeight,
@@ -220,14 +297,7 @@ QVector<QRect> CharacterLayoutEngine::buildActionIconRects(const QRect& iconSele
     return rects;
 }
 
-QRect CharacterLayoutEngine::buildMainRowRect(const QRect& base, bool isExpanded) {
-    return isExpanded ? base.adjusted(0, 0, 0, -base.height() / 2) : base;
-}
 
-//to do work out spacing between itemss sin teh top row and bottom row of expanded rect
-QRect CharacterLayoutEngine::buildDropdownRect(const QRect& baseRect) {
-    return baseRect.adjusted(0, baseRect.height() / 2, 0, 0);
-}
 
 // ----------------- Attack -----------------
 AttackRects CharacterLayoutEngine::buildAttackRects(const QRect& dropdownRect,
@@ -240,28 +310,25 @@ AttackRects CharacterLayoutEngine::buildAttackRects(const QRect& dropdownRect,
     const int padding            = spec.padding;
 
     int rowHeight = dropdownRect.height();
-    const int submitButtonSize = static_cast<int>(rowHeight * spec.submitButtonScale); // scale-based
-
-    // Left and right padding inside dropdown
-    int leftX  = dropdownRect.left() + padding;
-    int rightX = dropdownRect.right() - padding;
 
     // Stepper width = minus + padding + value + padding + plus
     const int stepperWidth = stepperButtonWidth + padding + stepperValueWidth + padding + stepperButtonWidth;
 
+    LayoutUtils::LeftAnchorBuilder left(dropdownRect);
+
     // Stepper frame
+    a.attackAmountFrame = left.control(stepperWidth, rowHeight, padding);
     a.attackAmountStepperRects = Stepper::buildStepperRects(
-        QRect(leftX, dropdownRect.top(), stepperWidth, rowHeight),
+        a.attackAmountFrame,
         stepperButtonWidth,
         stepperValueWidth,
         controlHeight,
         padding
     );
 
-    // OK button: anchored to right padding
-    a.submitButtonRect = QRect(rightX - submitButtonSize,
-                     dropdownRect.top() + (rowHeight - submitButtonSize) / 2,
-                     submitButtonSize, submitButtonSize);
+    // Submit button: anchored to right padding
+    LayoutUtils::RightAnchorBuilder right(dropdownRect);
+    a.submitButtonRect = right.icon(spec.submitButtonScale, padding);
 
     return a;
 }
@@ -272,13 +339,11 @@ CastRects CharacterLayoutEngine::buildCastRects(const QRect& dropdownRect,
                                                 const Character::LayoutSpec& spec) {
     CastRects c;
 
+    // Local vars
     const int controlHeight      = 24;
     const int stepperButtonWidth = 22;
     const int stepperValueWidth  = 40;
     const int padding            = spec.padding;
-
-    int xPos = padding * 2;        // relative to dropdown
-    int yPos = 0;                  // relative to dropdown top
     int rowHeight = dropdownRect.height();
 
     const int castingTimeLabelWidth = CharacterLayoutEngine::castingTimeLabelWidth();
@@ -288,9 +353,12 @@ CastRects CharacterLayoutEngine::buildCastRects(const QRect& dropdownRect,
                              stepperValueWidth + padding +
                              stepperButtonWidth;
 
+    // Build out controls
+    LayoutUtils::LeftAnchorBuilder left(dropdownRect);
+
     const int submitButtonSize = static_cast<int>(rowHeight * spec.submitButtonScale); // scale-based
 
-
+    // calculate how much space will be available to the spell edit control
     int reservedWidth =
         (castingTimeLabelWidth + padding + stepperWidth + (padding * 2)) +
         (durationLabelWidth    + padding + stepperWidth + (padding * 2)) +
@@ -299,47 +367,34 @@ CastRects CharacterLayoutEngine::buildCastRects(const QRect& dropdownRect,
     int spellEditWidth = std::max(100, dropdownRect.width() - reservedWidth - (padding * 2));
 
     // Spell edit
-    c.spellEdit = QRect(xPos, yPos + (rowHeight - controlHeight) / 2,
-                        spellEditWidth, controlHeight);
-    xPos += spellEditWidth + (padding * 2);
+    c.spellEdit = left.text(spellEditWidth, padding, dropdownRect.height() * 0.5);
 
     // Casting time
-    c.castingTimeLabel = QRect(xPos, yPos + (rowHeight - controlHeight) / 2,
-                               castingTimeLabelWidth, controlHeight);
-    xPos += castingTimeLabelWidth + padding;
-
-    c.castingTimeFrame = QRect(xPos, yPos, stepperWidth, rowHeight);
+    c.castingTimeLabel = left.text(castingTimeLabelWidth, padding);
+    c.castingTimeFrame = left.control(stepperWidth, rowHeight, padding);
     c.castingTimeStepperRects = Stepper::buildStepperRects(c.castingTimeFrame,
                                                            stepperButtonWidth,
                                                            stepperValueWidth,
                                                            controlHeight,
                                                            padding);
-    xPos += stepperWidth + (padding * 2);
 
     // Duration
-    c.durationLabel = QRect(xPos, yPos + (rowHeight - controlHeight) / 2,
-                            durationLabelWidth, controlHeight);
-    xPos += durationLabelWidth + padding;
-
-    c.durationFrame = QRect(xPos, yPos, stepperWidth, rowHeight);
+    c.durationLabel = left.text(durationLabelWidth, padding);
+    c.durationFrame = left.control(stepperWidth, rowHeight, padding);
     c.durationStepperRects = Stepper::buildStepperRects(c.durationFrame,
                                                         stepperButtonWidth,
                                                         stepperValueWidth,
                                                         controlHeight,
                                                         padding);
-    xPos += stepperWidth + (padding * 2);
 
-    // OK button
-    c.submitButtonRect = QRect(xPos,
-                     yPos + (rowHeight -submitButtonSize) / 2,
-                     submitButtonSize, submitButtonSize);
+    // Submit button
+    LayoutUtils::RightAnchorBuilder right(dropdownRect);
+    c.submitButtonRect = right.icon(spec.submitButtonScale, padding);
 
     return c;
 }
 
 
-
-//---------- Helpers -----------------
 
 // Calculate the minimal width of the cast row
 
@@ -404,93 +459,79 @@ bool CharacterLayoutEngine::checkIfCharacter(const std::shared_ptr<Character>& c
 void CharacterLayoutEngine::paintAttackDropdown(QPainter* painter,
                                                 const QRect& dropdownRect,
                                                 const AttackRects& attack,
-                                                const Character::LayoutSpec& spec) const{
-    qDebug() << "Painting attack dropdown rect " << dropdownRect;
-    // Compute vertical centering
-    const int h = dropdownRect.height();
-    const int y = dropdownRect.top() + (h - attack.attackAmountStepperRects.valueRect.height()) / 2;
+                                                const std::shared_ptr<Character>& character,
+                                                const QPoint& localCursor) const{
 
-    // Shift stepper rects vertically to match dropdownRect
-    StepperRects stepper = attack.attackAmountStepperRects;
-    stepper.minusRect.moveTop(y);
-    stepper.valueRect.moveTop(y);
-    stepper.plusRect.moveTop(y);
+    // Locals 
+    bool isPressed = QApplication::mouseButtons() & Qt::LeftButton;
 
-    PainterUtils::paintStepper(
+    //qDebug() << "Painting attack dropdown rect " << dropdownRect;
+
+    Stepper::paintStepper(
         painter,
         attack.attackAmountStepperRects,
-        1
+        character->attackRate()
     );
 
     // Draw Submit button
-    QRect submitButtonRect = attack.submitButtonRect;
-    submitButtonRect.moveTop(y);
-
-    QIcon submitButtonIcon = IconRepository::submit();
-    submitButtonIcon.paint(painter, submitButtonRect);
+    PainterUtils::paintIcon(
+        painter,
+        IconRepository::submit_icon(),
+        attack.submitButtonRect,
+        false,
+        attack.submitButtonRect.contains(localCursor),
+        attack.submitButtonRect.contains(localCursor) && isPressed,
+        attack.submitButtonRect.height()
+    );
 }
 
 
 void CharacterLayoutEngine::paintCastDropdown(QPainter* painter,
-                                            const QRect& dropdownRect,
-                                            const CastRects& cast,
-                                            const CastState& castState) const {
+                                                const QRect& dropdownRect,
+                                                const CastRects& cast,
+                                                const CastState& castState,
+                                                const QPoint& localCursor) const 
+{
+    // Locals 
+    bool isPressed = QApplication::mouseButtons() & Qt::LeftButton;
 
-    // --- Debug: print all cast rects ---
-    qDebug() << "Painting cast dropdown. Dropdown rect:" << dropdownRect;
-    qDebug() << "  spellEdit:" << cast.spellEdit;
-    qDebug() << "  castingTimeLabel:" << cast.castingTimeLabel;
-    qDebug() << "  castingTimeFrame:" << cast.castingTimeFrame;
-    qDebug() << "  castingTimeStepper.minusRect:" << cast.castingTimeStepperRects.minusRect;
-    qDebug() << "  castingTimeStepper.valueRect:" << cast.castingTimeStepperRects.valueRect;
-    qDebug() << "  castingTimeStepper.plusRect:" << cast.castingTimeStepperRects.plusRect;
-    qDebug() << "  durationLabel:" << cast.durationLabel;
-    qDebug() << "  durationFrame:" << cast.durationFrame;
-    qDebug() << "  durationStepper.minusRect:" << cast.durationStepperRects.minusRect;
-    qDebug() << "  durationStepper.valueRect:" << cast.durationStepperRects.valueRect;
-    qDebug() << "  durationStepper.plusRect:" << cast.durationStepperRects.plusRect;
-    qDebug() << "  submitButtonRect:" << cast.submitButtonRect;
+    painter->save();
 
+    // --- Labels ---
     painter->setFont(StyleRepository::labelFont(10, false));
-
-    // Compute vertical offset for alignment
-    const int h = dropdownRect.height();
-    const int yOffset = dropdownRect.top();
-
-    // Labels
-    QRect castingTimeLabel = cast.castingTimeLabel.translated(0, yOffset);
-    QRect durationLabel    = cast.durationLabel.translated(0, yOffset);
-
     painter->setPen(ColorRepository::text());
-    painter->drawText(castingTimeLabel, Qt::AlignVCenter | Qt::AlignLeft, "Speed");
-    painter->drawText(durationLabel,    Qt::AlignVCenter | Qt::AlignLeft, "Dur");
+    painter->drawText(cast.castingTimeLabel, Qt::AlignVCenter | Qt::AlignLeft, "Speed");
+    painter->drawText(cast.durationLabel,    Qt::AlignVCenter | Qt::AlignLeft, "Dur");
 
-    // Spell edit box
-    QRect spellEdit = cast.spellEdit.translated(0, yOffset);
+    // --- Spell edit ---
     painter->setPen(QPen(ColorRepository::buttonOutlineColor(), 1.0));
     painter->setBrush(ColorRepository::baseBackground());
-    painter->drawRoundedRect(spellEdit, 6, 6);
+    painter->drawRoundedRect(cast.spellEdit, 6, 6);
 
-    painter->setPen(castState.isDefaulted() ? ColorRepository::placeholderText() : ColorRepository::text());
-    const QString spellText = castState.isDefaulted() ? castState.defaultText : castState.spellName;
-    painter->drawText(spellEdit.adjusted(11, 2, -6, 0),
+    painter->setPen(castState.isDefaulted()
+                        ? ColorRepository::placeholderText()
+                        : ColorRepository::text());
+    const QString spellText = castState.isDefaulted()
+                                ? castState.defaultText
+                                : castState.spellName;
+    painter->drawText(cast.spellEdit.adjusted(11, 2, -6, 0),
                       Qt::AlignVCenter | Qt::AlignLeft, spellText);
 
-    // Steppers
-    StepperRects castingTimeStepper = cast.castingTimeStepperRects;
-    StepperRects durationStepper    = cast.durationStepperRects;
-    castingTimeStepper.minusRect.moveTop(castingTimeStepper.minusRect.top() + yOffset);
-    castingTimeStepper.valueRect.moveTop(castingTimeStepper.valueRect.top() + yOffset);
-    castingTimeStepper.plusRect.moveTop(castingTimeStepper.plusRect.top() + yOffset);
-    durationStepper.minusRect.moveTop(durationStepper.minusRect.top() + yOffset);
-    durationStepper.valueRect.moveTop(durationStepper.valueRect.top() + yOffset);
-    durationStepper.plusRect.moveTop(durationStepper.plusRect.top() + yOffset);
+    // --- Steppers ---
+    Stepper::paintStepper(painter, cast.castingTimeStepperRects, castState.castingTime);
+    Stepper::paintStepper(painter, cast.durationStepperRects,    castState.duration);
 
-    PainterUtils::paintStepper(painter, castingTimeStepper, castState.castingTime);
-    PainterUtils::paintStepper(painter, durationStepper, castState.duration);
+    // --- Submit button ---
+    PainterUtils::paintIcon(
+        painter,
+        IconRepository::submit_icon(),
+        cast.submitButtonRect,
+        false,
+        cast.submitButtonRect.contains(localCursor),
+        cast.submitButtonRect.contains(localCursor) && isPressed,
+        cast.submitButtonRect.height()
+    );
 
-    // Draw Submit button
-    QRect submitButtonRect = cast.submitButtonRect.translated(0, yOffset);
-    QIcon submitButtonIcon = IconRepository::submit();
-    submitButtonIcon.paint(painter, submitButtonRect);
+    painter->restore();
 }
+

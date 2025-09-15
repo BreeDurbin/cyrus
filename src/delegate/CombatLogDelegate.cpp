@@ -21,18 +21,23 @@ void CombatLogDelegate::paint(QPainter* painter,
 {
     painter->save();
 
+    qDebug() << "Painting";
+
     const QVariant charVar = index.data(Cyrus::CharacterRole);
     if (!charVar.canConvert<std::shared_ptr<Character>>()) { return; }
     auto character = charVar.value<std::shared_ptr<Character>>();
 
     const Character::LayoutSpec& spec = character->layoutSpec();
+    const int padding = spec.padding;
 
     // Base rects
     QRect baseRect    = LayoutUtils::padRectangle(option.rect, spec.padding);
-    QRect heroIconRect = LayoutUtils::buildHeroIconRect(baseRect, spec.heroIconScale);
+    LayoutUtils::LeftAnchorBuilder left(baseRect);
+    QRect heroIconRect = left.icon(spec.heroIconScale, padding);
+
     // build text rect right side is not a rectangle it is the right side of base rect
     QRect rightBoundary(baseRect.right(), baseRect.top(), 0, baseRect.height());
-    QRect textRect     = LayoutUtils::buildTextRect(heroIconRect, rightBoundary, spec.padding);
+    QRect textRect = left.text(heroIconRect.left() - baseRect.right(), padding);
 
     // Background
     painter->setBrush(option.state & QStyle::State_Selected
@@ -48,7 +53,6 @@ void CombatLogDelegate::paint(QPainter* painter,
                     QIcon::Normal, QIcon::On);
     }
 
-
     // Text (from Character)
     painter->setPen(ColorRepository::text());
     painter->drawText(textRect,
@@ -59,40 +63,42 @@ void CombatLogDelegate::paint(QPainter* painter,
     painter->restore();
 }
 
-
 QSize CombatLogDelegate::sizeHint(const QStyleOptionViewItem& option,
                                   const QModelIndex& index) const
 {
+    //Character payload
     const QVariant charVar = index.data(Cyrus::CharacterRole);
     if (!charVar.canConvert<std::shared_ptr<Character>>()) {
         return QStyledItemDelegate::sizeHint(option, index);
     }
+
     auto character = charVar.value<std::shared_ptr<Character>>();
     const Character::LayoutSpec& spec = character->layoutSpec();
+    const int padding = spec.padding;
 
-    // Base rects
-    QRect baseRect    = LayoutUtils::padRectangle(option.rect, spec.padding);
-    //we cant scale based on item height because we are calculating item height now
-    int defaultIconHeight = 32; 
-    QRect heroIconRect(baseRect.left(),
-                    baseRect.top(),
-                    defaultIconHeight, // width == height for square icon
-                    defaultIconHeight);
+    // Start with padded base rect
+    QRect baseRect = LayoutUtils::padRectangle(option.rect, spec.padding);
 
-    // Text rect area (everything to the right of hero icon until baseRect.right)
-    QRect rightBoundary(baseRect.right(), baseRect.top(), 0, baseRect.height());
-    QRect textRect     = LayoutUtils::buildTextRect(heroIconRect, rightBoundary, spec.padding);
+    // base Rect =  padding + hero icon + padding + text + padding
+
+    // Hero icon (fixed scale relative to height)
+    int heroIconSize = spec.preferredHeight * spec.heroIconScale;
+
+    // Remaining width for text
+    int totalWidth = baseRect.right() - baseRect.left();
+    int textWidth = totalWidth - (3 * padding) - heroIconSize;
 
     // Measure wrapped text height
     QFontMetrics fm(option.font);
-    QRect textBounding = fm.boundingRect(QRect(0, 0, textRect.width(), INT_MAX),
+    QRect textBounding = fm.boundingRect(QRect(baseRect.left() + (2 * padding) + heroIconSize, baseRect.top(), textWidth, INT_MAX),
                                          Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
                                          character->combatLog());
 
     int textHeight = textBounding.height();
 
-    // Total height should fit both the hero icon and the wrapped text, plus padding
-    int totalHeight = qMax(heroIconRect.height(), textHeight) + spec.padding * 2;
+    // Total height should accommodate icon and text plus padding
+    int totalHeight = qMax(heroIconSize, textHeight) + padding * 2;
 
     return QSize(option.rect.width(), totalHeight);
 }
+

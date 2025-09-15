@@ -33,16 +33,23 @@ class InitiativeDelegate : public QStyledItemDelegate {
         //update item state 
         void commitData(const QLineEdit* lineEdit) const;
         void closeEditor(const QLineEdit* lineEdit) const;
+
+        //Cast Actions
         void spellNameEdited(const QUuid& id, const QString& name) const;
-        void decrementCastingTimeClicked(const QUuid& id);
-        void incrementCastingTimeClicked(const QUuid& id);
-        void decrementDurationClicked(const QUuid& id);
-        void incrementDurationClicked(const QUuid& id);
-        void castSubmitted(const QUuid& id, const Character& character);
+        void decrementCastingTime(const QUuid& id);
+        void incrementCastingTime(const QUuid& id);
+        void decrementDuration(const QUuid& id);
+        void incrementDuration(const QUuid& id);
+        void castSubmitted(const QUuid& id, const std::shared_ptr<Character>& character);
+
+        //Attack Actions
+        void decrementAttackAmount(const QModelIndex& index);
+        void incrementAttackAmount(const QModelIndex& index);
+        void attackSubmitted(const QModelIndex& index);
 
         //update model
-        void deleteItemClicked(const QModelIndex& index) const; // delete button clicked
-        void iconSelectorClicked(const QModelIndex& index, Cyrus::ActionType actionType); // icon selector hit
+        void deleteItem(const QModelIndex& index) const; // delete button clicked
+        void iconSelected(const QModelIndex& index, Cyrus::ActionType actionType); // icon selector hit
 
     protected:
         bool checkActiveIndex(const QModelIndex& index, const QStyleOptionViewItem& option) const;

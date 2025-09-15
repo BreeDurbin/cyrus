@@ -11,5 +11,6 @@
     <file>icon/ui/load_icon.png</file>
     <file>icon/ui/submit_icon.png</file>
     <file>icon/ui/clone_icon.png</file>
+    <file>icon/ui/delete_icon.png</file>
   </qresource>
 </RCC>

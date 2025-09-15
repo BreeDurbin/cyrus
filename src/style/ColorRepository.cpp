@@ -77,7 +77,7 @@ QColor ColorRepository::selectedBackground()
 
 QColor ColorRepository::segmentBackground()
 {
-    return m_bluePrimary();
+    return m_blueMuted();
 }
 
 QColor ColorRepository::pressedTextColor()

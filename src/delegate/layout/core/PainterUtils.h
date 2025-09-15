@@ -10,18 +10,6 @@
 
 
 namespace PainterUtils {
-    void paintStepper(QPainter* painter,
-                      const StepperRects& rects,
-                      int value);
-
-    void paintDeleteButton(QPainter* painter,
-                           const QRect& rect,
-                           bool hovered);
-
-    void paintActionIcon(QPainter* painter,
-                         const QIcon& icon,
-                         const QRect& rect,
-                         bool selected,
-                         bool hovered,
-                         int iconSize);
+    void paintIcon(QPainter* painter, const QIcon& icon, const QRect& rect,
+                bool selected, bool hovered, bool pressed, int iconSize);
 } // namespace PainterUtils

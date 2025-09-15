@@ -9,32 +9,69 @@ namespace LayoutUtils {
         return base.adjusted(padding, padding, -padding, -padding);
     }
 
-    inline QRect buildHeroIconRect(const QRect& base, double heroIconScale = 0.8) {
-        int size = static_cast<int>(base.height() * heroIconScale);
-        return QRect(base.left(), base.top(), size, size);
-    }
 
-    inline QRect buildInitiativeRect(const QRect& left, int padding, int width) {
-        return QRect(left.right() + padding, left.top(),
-                    width, left.height());
-    }
+    struct LeftAnchorBuilder {
+        QRect baseRect;
+        int cursorX;
 
-    inline QRect buildTextRect(const QRect& left,
-                               const QRect& right,
-                               int padding) {
-        return QRect(left.right() + padding,
-                     left.top(),
-                     right.left() - (left.right() + 2 * padding),
-                     left.height());
-    }
+        LeftAnchorBuilder(const QRect& base)
+            : baseRect(base), cursorX(base.left()) {}
 
-    inline QRect buildDeleteRect(const QRect& base, int padding, double scale) {
-        const int rectSize = static_cast<int>(base.height() * scale);
-        return QRect(base.right() - rectSize - padding,
-                     base.top() + (base.height() - rectSize) / 2,
-                     rectSize,
-                     rectSize);
-    }
+        // Build a left-anchored icon
+        QRect icon(double scale, int padding) {
+            int size = static_cast<int>(baseRect.height() * scale);
+            QRect r(cursorX, baseRect.top() + (baseRect.height() - size)/2, size, size);
+            cursorX += size + padding;
+            return r;
+        }
+
+        QRect text(int width, int padding, int height = -1) {
+            if (height < 0) height = baseRect.height();
+            int y = baseRect.top() + (baseRect.height() - height) / 2;
+            QRect r(cursorX, y, width, height);
+            cursorX += width + padding;
+            return r;
+        }
+
+        // Build a generic control (like a stepper)
+        QRect control(int width, int height, int padding) {
+            QRect r(cursorX, baseRect.top() + (baseRect.height() - height)/2, width, height);
+            cursorX += width + padding;
+            return r;
+        }
+    };
+
+    struct RightAnchorBuilder {
+        QRect baseRect;
+        int cursorX;
+
+        RightAnchorBuilder(const QRect& base)
+            : baseRect(base), cursorX(base.right()) {}
+
+        QRect icon(double scale, int padding) {
+            int size = static_cast<int>(baseRect.height() * scale);
+            cursorX -= size; // move left for this rect
+            QRect r(cursorX, baseRect.top() + (baseRect.height() - size)/2, size, size);
+            cursorX -= padding; // prepare for next
+            return r;
+        }
+
+        QRect text(int width, int padding, int height = -1) {
+            if (height < 0) height = baseRect.height();
+            int y = baseRect.top() + (baseRect.height() - height) / 2;
+            QRect r(cursorX, y, width, height);
+            cursorX += width + padding;
+            return r;
+        }
+
+        QRect control(int width, int height, int padding) {
+            cursorX -= width;
+            QRect r(cursorX, baseRect.top() + (baseRect.height() - height)/2, width, height);
+            cursorX -= padding;
+            return r;
+        }
+    };
+
 
 } // namespace LayoutUtils
 

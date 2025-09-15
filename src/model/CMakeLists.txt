@@ -1,10 +1,11 @@
 add_library(model STATIC
-    AttackAction.cpp
-    AttackAction.h
-    Character.cpp
-    Character.h
-    CastAction.cpp
-    CastAction.h
+    data/AttackRate.h
+    data/AttackAction.cpp
+    data/AttackAction.h
+    data/Character.cpp
+    data/Character.h
+    data/CastAction.cpp
+    data/CastAction.h
     CharacterModel.cpp
     CharacterModel.h
 )
@@ -12,7 +13,8 @@ add_library(model STATIC
 target_include_directories(
     model 
     PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}    
+    ${CMAKE_CURRENT_SOURCE_DIR}/data
 )
 
 target_link_libraries(

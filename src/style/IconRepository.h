@@ -50,11 +50,12 @@ namespace IconRepository {
     }
 
     // UI icons
-    inline QIcon miniCyrus() { return QIcon(":/image/CYRUS_ICON_TINY.png"); }
-    inline QIcon save()      { return QIcon(":/icon/ui/save_icon.png"); }
-    inline QIcon load()      { return QIcon(":/icon/ui/load_icon.png"); }
-    inline QIcon hourglass() { return QIcon(":/icon/ui/hourglass_icon.png"); }
-    inline QIcon submit()    { return QIcon(":icon/ui/submit_icon.png"); }
-    inline QIcon clone()    { return QIcon(":icon/ui/clone_icon.png"); }
+    inline QIcon miniCyrus_icon() { return QIcon(":/image/CYRUS_ICON_TINY.png"); }
+    inline QIcon save_icon()      { return QIcon(":/icon/ui/save_icon.png"); }
+    inline QIcon load_icon()      { return QIcon(":/icon/ui/load_icon.png"); }
+    inline QIcon hourglass_icon() { return QIcon(":/icon/ui/hourglass_icon.png"); }
+    inline QIcon submit_icon()    { return QIcon(":icon/ui/submit_icon.png"); }
+    inline QIcon clone_icon()     { return QIcon(":icon/ui/clone_icon.png"); }
+    inline QIcon delete_icon()    { return QIcon(":icon/ui/delete_icon.png"); }
 
 }

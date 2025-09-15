@@ -30,30 +30,41 @@ InitiativeDelegate::InitiativeDelegate(CharacterController* characterController,
     //const auto& attackActionLayoutEngine = LayoutFactory::forCharacterType<AttackAction>();  // need this later
 
     //Chain character Layout Engine signals to initiative delegate signals
-    //create a dummy csharacter for the factory sso it will return a car layout engine
+
+    //Cast actions
     connect(characterLayoutEngine, &CharacterLayoutEngine::spellNameEdited,
             this, &InitiativeDelegate::spellNameEdited);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::decrementCastingTimeClicked,
-            this, &InitiativeDelegate::decrementCastingTimeClicked);
+            this, &InitiativeDelegate::decrementCastingTime);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::incrementCastingTimeClicked,
-            this, &InitiativeDelegate::incrementCastingTimeClicked);
+            this, &InitiativeDelegate::incrementCastingTime);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::decrementDurationClicked,
-            this, &InitiativeDelegate::decrementDurationClicked);
+            this, &InitiativeDelegate::decrementDuration);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::incrementDurationClicked,
-            this, &InitiativeDelegate::incrementDurationClicked);
+            this, &InitiativeDelegate::incrementDuration);
 
-    connect(characterLayoutEngine, &CharacterLayoutEngine::castSubmitted,
+    connect(characterLayoutEngine, &CharacterLayoutEngine::castSubmitClicked,
             this, &InitiativeDelegate::castSubmitted);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItemClicked);
+            this, &InitiativeDelegate::deleteItem);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::iconSelectorClicked,
-            this, &InitiativeDelegate::iconSelectorClicked);
+            this, &InitiativeDelegate::iconSelected);
+
+    // Attack actions
+    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementAttackAmountClicked,
+            this, &InitiativeDelegate::decrementAttackAmount);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementAttackAmountClicked,
+            this, &InitiativeDelegate::incrementAttackAmount);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::attackSubmitClicked,
+            this, &InitiativeDelegate::attackSubmitted);
 
 }
 
@@ -85,9 +96,13 @@ void InitiativeDelegate::paint(QPainter* painter,
     const auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
 
     // --- Background ---
-    QColor bg = isCurrentSegment
-        ? ColorRepository::selectedBackground()
-        : ColorRepository::baseBackground();
+    auto pickColor = [](bool isActiveIndex, bool isCurrentSegment) {
+        if(isActiveIndex) return ColorRepository::selectedBackground();
+        if(isCurrentSegment) return ColorRepository::segmentBackground();
+        return ColorRepository::baseBackground();
+    };
+
+    QColor bg = pickColor(isActiveIndex, isCurrentSegment);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setPen(Qt::NoPen);
@@ -127,6 +142,9 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
     }
 
     if (event->type() == QEvent::MouseButtonRelease) {
+
+        auto* view = qobject_cast<QListView*>(const_cast<QWidget*>(option.widget)); 
+
         const QVariant charVar = index.data(Cyrus::CharacterRole);
         if (!charVar.canConvert<std::shared_ptr<Character>>()) { return false; }
         auto character = charVar.value<std::shared_ptr<Character>>();
@@ -142,7 +160,11 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
         auto callback = engine->hitTest(index, layout, character, localCursor);
         if(callback){
-            callback->execute();
+            callback->execute(view);
+            qDebug() << "Finished execution 1";
+            //Repaint the updated item
+            if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
+            qDebug() << "Finished execution 2";
             return true;
         }
     }

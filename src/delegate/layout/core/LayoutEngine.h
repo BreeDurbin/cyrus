@@ -7,14 +7,16 @@
 #include <QFontMetrics>
 #include "CastState.h"
 #include <memory>
+#include <QListView>
 
 struct Layout { 
     virtual ~Layout() = default; 
     QRect baseRect;
 };
 
+// view needed for edit support
 struct HitCommand {
-    std::function<void()> execute;
+    std::function<void(QListView*)> execute;
 };
 
 struct LayoutEngine : public QObject {
@@ -37,7 +39,7 @@ struct LayoutEngine : public QObject {
         virtual void paintLayout(QPainter* painter,
             const std::shared_ptr<Layout>& layout,
             const std::shared_ptr<Character>& character,
-            const CastState& castState,
+            const CastState castState,
             bool isActiveIndex,
             bool isExpanded,
             const QPoint& localCursor ) const = 0;

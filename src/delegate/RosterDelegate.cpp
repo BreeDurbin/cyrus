@@ -96,6 +96,10 @@ bool RosterDelegate::editorEvent(QEvent *event,
     }
 
     if (event->type() == QEvent::MouseButtonRelease) {
+
+        const QWidget* viewport = option.widget;
+        auto* view = qobject_cast<QListView*>(viewport->parentWidget());
+
         // --- Character payload ---
         const QVariant charVar = index.data(Cyrus::CharacterRole);
         if (!charVar.canConvert<std::shared_ptr<Character>>()) {
@@ -112,7 +116,7 @@ bool RosterDelegate::editorEvent(QEvent *event,
 
         auto callback = engine->hitTest(index, layout, character, localCursor);
         if(callback){
-            callback->execute();
+            callback->execute(view);
             return true;
         }
     }

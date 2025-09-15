@@ -55,7 +55,7 @@ void AttackActionLayoutEngine::paintLayout(
                     QPainter* painter,
                     const std::shared_ptr<Layout>& layout,
                     const std::shared_ptr<Character>& character,
-                    const CastState& castState,
+                    const CastState castState,
                     bool isActiveIndex,
                     bool isExpanded,
                     const QPoint& localCursor) const {

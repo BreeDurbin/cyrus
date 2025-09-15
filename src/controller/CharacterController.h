@@ -5,6 +5,7 @@
 #include <QModelIndex>
 #include "CastState.h"
 #include "Enums.h"
+#include <memory>
 
 class InitiativeView;
 class CharacterModel;
@@ -26,8 +27,8 @@ public:
 
     QModelIndex addToRoster(const QString &name, int initiative, Cyrus::CharacterType type);
     QModelIndex loadRoster();
-    CastState& stateFor(const QUuid& id) {
-        return states_[id];
+    CastState stateFor(const QUuid& id) {
+        return states_.value(id);
     }
 
 signals:
@@ -37,13 +38,18 @@ signals:
     void roundChangedText(const QString& text);
 
 public slots:
-    // update controller cached state
+    // Cast Actions
     void setSpellName(const QUuid& id, const QString& name);
     void decrementCastingTime(const QUuid& id);
     void incrementCastingTime(const QUuid& id);
     void decrementDuration(const QUuid& id);
     void incrementDuration(const QUuid& id);
-    void castSubmitted(const QUuid& id, const Character& caster);
+    void castSubmitted(const QUuid& id, const std::shared_ptr<Character>& character);
+
+    //Attack Actions
+    void decrementAttackAmount(const QModelIndex& index);
+    void incrementAttackAmount(const QModelIndex& index);
+    void attackSubmitted(const QModelIndex& index);
 
     //update model
     void updateAction(const QModelIndex& index, Cyrus::ActionType actionType);
