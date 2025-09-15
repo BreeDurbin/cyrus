@@ -187,6 +187,14 @@ the first round and three times in the second).
 
 
 
-Source:
+Sources:
+
 https://archive.org/details/player-s-handbook-2nd-edition-2101/page/93/mode/2up?view=theater
+
 https://archive.org/details/player-s-handbook-2nd-edition-2101/page/95/mode/2up?view=theater
+
+
+
+2nd edition DMG revised rules
+
+https://archive.org/details/dungeon-master-guide-revised-premium-edition/page/77/mode/2up?view=theater 
