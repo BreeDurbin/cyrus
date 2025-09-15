@@ -10,7 +10,7 @@
 Cyrus is an initiative and combat action tracker for the individual initiative system in AD&D 2nd edition.
 
 ## Preview:
-![preview](./docs/screenshots/CYRUS_PREVIEW.png)
+![preview](./docs/screenshots/CYRUS_PREVIEW_2.png)
 
 
 Dependencies:
@@ -56,6 +56,8 @@ Cyrus tracks when character will take their turns in the initiative. It tracks w
 
 Cyrus does not replacing you or your players rolling dice. It is there to speed up the pace of combats and getting combats started faster, but it does not to turn the ttrpg into a video game.
 
+## How Initiative Words in AD&D 2e
+![Initiative Rules](./INITIATIVE_RULES.md)
 
 
 ## Contributors
