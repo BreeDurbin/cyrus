@@ -10,13 +10,16 @@
 Cyrus is a feature rich initiative and combat tracker for AD&D 2nd edition. It supports the AD&D 2nd edition combat sequence including all phases and extra optional rules such as indidual initiative, weapon speed to attacks, group initiative and initiative modifieers for misc. actions. 
 
 There is also a rostering system so you can build out your encounters in your prep, save them off and then load them in at session time for quick combat startup. 
-Group initiative is a checkbox so that you can control which initiative system is used on a per round basis. You can also choose to keep one initiative for the entire combat or to reroll initiative every round. 
 
-Spells add their casting time to the initiative and then if they have a duration(rounds) start counting down their rounds once they are cast. For example a shield spell lasting 10 roungs will cast and then last for 10 rounds in the initiative before falling off. This automates tracking the durations of effects.
+To determine if a character is a pc or a npc/monster there is a faction coloring system. For blue colored characters they are pc controlled and are tasked in the Player Resolution combat sequence step. For non Blue (Red, Gray purple, orange etc) they are tasked in the NPC Resolution step.
+
+Group initiative is a checkbox so that you can control which initiative system is used on a per round basis. You can also choose to keep one initiative for the entire combat or to reroll initiative every round. Group initiative is per faction based so you can have Gray(town guard) helping the pcs(Blue) in combat against the Red(Orc raiders) and you will get 3 seperate grouped initiatives. One for PCs, one for the Town Guard and one for the Orc Raiders.
+
+Spells add their casting time to the initiative and then if they have a duration(rounds) start counting down their rounds once they are cast. For example a shield spell lasting 10 rounds will cast and then last for 10 rounds in the initiative before falling off. This automates tracking the durations of effects.
 
 Weapons add their speed to the attack and put a new card into the initiative and then resolve as the current initiative passes the card. Attacks are supported in half attack increments so a fighter with 5/2 attacks who attacks on the first round will put 2 attack cardss into the initiative and then on the second round if he attacks again it will be 3 cards and so on. Ex: Ragnar has 5/2 attacks a round and is initiative 3 with weapon speed 4. His attack cards will then be attack 1 at initiative 7 and attack 2 at initiative 11. Each attack adds the weapon speed value to initiative the attack resolves at.
 
-To support haste and other muffs which modify attack speed simply change the attack amount of the character affected. If ragnar gets hasted a haste card will be put into the order and then you up his attacks from 5/2 to 7/2 and move it back down when the haste expires. 
+To support haste and other buffs which modify attack speed simply change the attack amount of the character affected. If Ragnar gets hasted a haste card will be put into the order and then you up his attacks from 5/2 to 7/2 and move it back down when the haste expires. 
 
 There is no modeling of individual effects or dice rolls. How Cyrus helps is by tracking who is doing what, what has been done and when they resolve in the actual resolution step.
 
