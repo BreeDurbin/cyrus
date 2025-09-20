@@ -9,6 +9,8 @@
 
 Cyrus is a feature rich initiative and combat tracker for AD&D 2nd edition. It supports the AD&D 2nd edition combat sequence including all phases and extra optional rules such as indidual initiative, weapon speed to attacks, group initiative and initiative modifiers for misc. actions. 
 
+## How to use Cyrus for your sessions:
+
 There is also a rostering system so you can build out your encounters during your prep, save them off and then load them in at session time for quick combat startup. There is also a clone button for cloning mmosters in your roster, it will number the monsters if there is more than one monster with the same name. For example: To build out a random encounter of a drow surface raiding party you could: 1. Add in a drow fighter. Click clone 4 times. You now have 5 numbered drow fighters. Then add in a priestess of Lloth. You how have a quickly setup 6 enemy encounter.
 
 To determine if a character is a pc or a npc/monster there is a faction coloring system. For blue colored characters they are pc controlled and are tasked in the Player Resolution combat sequence step. For non Blue (Red, Gray purple, orange etc) they are tasked in the NPC Resolution step.
