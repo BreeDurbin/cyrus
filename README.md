@@ -11,9 +11,13 @@ Cyrus is a feature rich initiative and combat tracker for AD&D 2nd edition. It s
 
 ## How to use Cyrus for your sessions:
 
+
+### Creating an encounter (Roster component):
 There is also a rostering system so you can build out your encounters during your prep, save them off and then load them in at session time for quick combat startup. There is also a clone button for cloning mmosters in your roster, it will number the monsters if there is more than one monster with the same name. For example: To build out a random encounter of a drow surface raiding party you could: 1. Add in a drow fighter. Click clone 4 times. You now have 5 numbered drow fighters. Then add in a priestess of Lloth. You how have a quickly setup 6 enemy encounter.
 
 To determine if a character is a pc or a npc/monster there is a faction coloring system. For blue colored characters they are pc controlled and are tasked in the Player Resolution combat sequence step. For non Blue (Red, Gray purple, orange etc) they are tasked in the NPC Resolution step.
+
+### Initiative Order features:
 
 Group initiative is a checkbox so that you can control which initiative system is used on a per round basis. You can also choose to keep one initiative for the entire combat or to reroll initiative every round. Group initiative is per faction based so you can have Gray(town guard) helping the pcs(Blue) in combat against the Red(Orc raiders) and you will get 3 seperate grouped initiatives. One for PCs, one for the Town Guard and one for the Orc Raiders.
 
@@ -23,7 +27,9 @@ Weapons add their speed to the attack and put a new card into the initiative and
 
 To support haste and other buffs which modify attack speed simply change the attack amount of the character affected. If Ragnar gets hasted a haste card will be put into the order and then you up his attacks from 5/2 to 7/2 and move it back down when the haste expires. 
 
-To remmove characters from the roster or the initiative order click the skull icon to delete them.
+### Post combat:
+
+To remove characters from the roster or the initiative order click the skull icon to delete them.
 
 To clear the combat log or initiative order click the 'X' button at the top right of those components.
 
