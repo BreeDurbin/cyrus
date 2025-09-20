@@ -8,7 +8,7 @@ struct CastState {
     int castingTime = 1;
     int duration = 0;
 
-    bool isDefaulted() const { return spellName == ""; };
+    bool isDefaulted() const { return spellName == "NAME_UNSET"; };
 };
 
 Q_DECLARE_METATYPE(CastState)

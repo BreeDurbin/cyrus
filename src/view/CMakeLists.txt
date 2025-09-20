@@ -1,11 +1,15 @@
 set(VIEW_HEADERS
     InitiativeView.h
-    IconSelector.h
+    custom_widgets/IconSelector.h
+    custom_widgets/PillStepper.h
+    custom_widgets/Stepper.h
+    custom_widgets/CyrusButton.h
 )
 
 set(VIEW_SOURCES
     InitiativeView.cpp
-    IconSelector.cpp
+    custom_widgets/IconSelector.cpp
+    custom_widgets/PillStepper.cpp
 )
 
 add_library( 
@@ -28,4 +32,5 @@ target_include_directories(
     view 
     PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_widgets
 )

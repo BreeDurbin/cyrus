@@ -1,41 +1,55 @@
 [[characters]]
+attackRate = 1
+baseName = 'Guts'
 class = 0
-initiative = 3
-name = 'Guts'
+faction = 1
 uuid = '7ca6268d-1f0a-4bba-bb62-227e8375a1bc'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Casca'
 class = 0
-initiative = 4
-name = 'Casca'
+faction = 1
 uuid = '83bd4380-932e-4cee-b278-9f1cd0a2a940'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Griffith'
 class = 0
-initiative = 4
-name = 'Griffith'
+faction = 1
 uuid = '977b926a-9713-47c6-b454-6b346486e168'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Judeau'
 class = 0
-initiative = 9
-name = 'Judeau'
+faction = 1
 uuid = '34187cbe-2460-445b-aac3-f11b51a31eb2'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Pippin'
 class = 0
-initiative = 9
-name = 'Pippin'
+faction = 1
 uuid = '049fc806-c9ac-4505-849c-821e71362b7e'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Corkus'
 class = 0
-initiative = 1
-name = 'Corkus'
+faction = 1
 uuid = '96dec369-c793-48fd-9634-9c876016d3f5'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Rickert'
 class = 0
-initiative = 3
-name = 'Rickert'
+faction = 1
 uuid = '38558042-806d-4139-b860-f86f74df8504'
+weaponSpeed = 0

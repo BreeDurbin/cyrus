@@ -5,6 +5,8 @@
 #include <QStringLiteral>
 #include <QColor>
 #include <QIcon>
+#include <QFontDatabase>
+#include <QDebug>
 
 namespace {
     // Helper to convert QColor to CSS hex string (#RRGGBB)
@@ -26,7 +28,7 @@ QString StyleRepository::hero() {
 }
 
 QString StyleRepository::mainWindow() {
-    return QStringLiteral(R"(
+    return QString(R"(
         QDialog, QMainWindow {
             background: %1;
             border: 2px solid %2;
@@ -36,14 +38,15 @@ QString StyleRepository::mainWindow() {
 
         QDialog::title, QMainWindow::title {
             color: %3;
-            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            font-family: "%4";
             font-size: 16pt;
             font-weight: bold;
         }
     )")
         .arg(cssColor(ColorRepository::windowBackground()))
         .arg(cssColor(ColorRepository::baseBackground()))
-        .arg(cssColor(ColorRepository::text()));
+        .arg(cssColor(ColorRepository::text()))
+        .arg(StyleRepository::titleFontFamily());
 }
 
 QString StyleRepository::label() {
@@ -51,16 +54,17 @@ QString StyleRepository::label() {
         QLabel {
             background: transparent;
             color: %1;
-            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            font-family: %2;
             font-size: 24px;
             padding: 2px;
         }
         QLabel:disabled {
-            color: %2;
+            color: %3;
         }
     )")
-        .arg(cssColor(ColorRepository::text()))
-        .arg(cssColor(ColorRepository::pressedOutlineColor())); // using muted/disabled tone
+    .arg(cssColor(ColorRepository::text()))
+    .arg(StyleRepository::titleFontFamily())
+    .arg(cssColor(ColorRepository::pressedOutlineColor()));
 }
 
 QString StyleRepository::itemView() {
@@ -334,23 +338,40 @@ QString StyleRepository::comboBox() {
 }
 
 
-QFont StyleRepository::labelFont(int pointSize, bool bold)
+QString StyleRepository::titleFontFamily() {
+    static QString family = [] {
+        int id = QFontDatabase::addApplicationFont(":/font/Black_Chancery.ttf");
+        if (id == -1) {
+            qWarning() << "Failed to load Black Chancery font!";
+            return QStringLiteral("Times New Roman");
+        }
+        return QFontDatabase::applicationFontFamilies(id).at(0);
+    }();
+    return family;
+}
+
+QFont StyleRepository::titleFont(int pointSize, bool bold)
 {
-    QFont font("Segoe UI", pointSize);   // modern, clean font
+    QFont font(StyleRepository::titleFontFamily(), pointSize);
     font.setBold(bold);
     return font;
 }
 
-QFont StyleRepository::labelPlaceholderFont(int pointSize)
-{
-    QFont font("Segoe UI", pointSize);   // modern, clean font
-    font.setItalic(true);
-    return font;
+QString StyleRepository::textFontFamily() {
+    static QString family = [] {
+        int id = QFontDatabase::addApplicationFont(":/font/IM_Fell_English.ttf");
+        if (id == -1) {
+            qWarning() << "Failed to load Black Chancery font!";
+            return QStringLiteral("Times New Roman");
+        }
+        return QFontDatabase::applicationFontFamilies(id).at(0);
+    }();
+    return family;
 }
 
-QFont StyleRepository::progressFont(int pointSize, bool bold)
+QFont StyleRepository::textFont(int pointSize, bool bold)
 {
-    QFont font("Segoe UI", pointSize);   // modern, clean font
+    QFont font(StyleRepository::textFontFamily(), pointSize);
     font.setBold(bold);
     return font;
 }

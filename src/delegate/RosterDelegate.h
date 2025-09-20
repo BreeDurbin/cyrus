@@ -24,10 +24,10 @@ class RosterDelegate : public QStyledItemDelegate {
         QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     
     signals:
-        void incrementRosterMemberInitiativeClicked(const QModelIndex& index);
-        void decrementRosterMemberInitiativeClicked(const QModelIndex& index);
-        void cloneRosterMemberClicked(const QModelIndex& index);
-        void deleteButtonClicked(const QModelIndex& index);
+        void nextFaction(const QModelIndex& index);
+        void previousFaction(const QModelIndex& index);
+        void cloneRosterMember(const QModelIndex& index);
+        void deleteRosterMember(const QModelIndex& index);
 
     protected:
         QPoint cursorPosInItem(const QStyleOptionViewItem& option, const QEvent* event = nullptr) const;

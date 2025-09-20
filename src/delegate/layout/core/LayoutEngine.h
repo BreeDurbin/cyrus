@@ -12,6 +12,7 @@
 struct Layout { 
     virtual ~Layout() = default; 
     QRect baseRect;
+    QRect mainRowRect;
 };
 
 // view needed for edit support
@@ -28,21 +29,27 @@ struct LayoutEngine : public QObject {
             const QRect& baseRect,
             const std::shared_ptr<Character>& character,
             bool isActive,
-            bool isExpanded) const = 0;
+            bool isExpanded,
+            const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+        ) const = 0;
 
         virtual std::optional<HitCommand> hitTest(
             const QModelIndex& index,
             const std::shared_ptr<Layout>& layout,
             const std::shared_ptr<Character>& character,
-            const QPoint& cursor) = 0;
+            const QPoint& cursor,
+            const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+        ) = 0;
 
         virtual void paintLayout(QPainter* painter,
             const std::shared_ptr<Layout>& layout,
             const std::shared_ptr<Character>& character,
             const CastState castState,
-            bool isActiveIndex,
+            bool isSelectedIndex,
             bool isExpanded,
-            const QPoint& localCursor ) const = 0;
+            const QPoint& localCursor,
+            const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+         ) const = 0;
 
         virtual int minimumWidth(
             const std::shared_ptr<Character>& character) const = 0;

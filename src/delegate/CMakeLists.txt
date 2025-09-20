@@ -14,13 +14,14 @@ add_library(
     layout/core/LayoutUtils.h
     layout/core/PainterUtils.cpp
     layout/core/PainterUtils.h
-    layout/core/Stepper.h
     layout/initiative_order/CharacterLayoutEngine.cpp
     layout/initiative_order/CharacterLayoutEngine.h
     layout/initiative_order/AttackActionLayoutEngine.cpp
     layout/initiative_order/AttackActionLayoutEngine.h
     layout/initiative_order/CastActionLayoutEngine.cpp
     layout/initiative_order/CastActionLayoutEngine.h
+    layout/initiative_order/MiscActionLayoutEngine.cpp
+    layout/initiative_order/MiscActionLayoutEngine.h
     layout/roster/RosterLayoutEngine.cpp
     layout/roster/RosterLayoutEngine.h
 )

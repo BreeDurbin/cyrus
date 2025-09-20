@@ -41,12 +41,12 @@ void InitiativeView::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 bool InitiativeView::hasActiveIndex() const { 
-    qDebug() << "InitiativeView::hasActiveIndex()=" << activeIndex_.isValid();
+    //qDebug() << "InitiativeView::hasActiveIndex()=" << activeIndex_.isValid();
     return activeIndex_.isValid(); 
 }
 
 void InitiativeView::setActiveIndex(const QModelIndex& index) {
-    qDebug() << "setActiveIndex called with row" << index.row() << "valid?" << index.isValid();
+    //qDebug() << "setActiveIndex called with row" << index.row() << "valid?" << index.isValid();
     activeIndex_ = index;
     viewport()->update();
 }

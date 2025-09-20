@@ -12,15 +12,15 @@ class AttackAction : public Character {
     };
 
     inline static const QStringList actionTypeLogEntries {
-        " attacks ",
+        " attacks",
         " casts "
     };
 
     AttackAction() : Character() {}
 
-    AttackAction(QString name, int initiative, Cyrus::CharacterType characterType, Cyrus::ActionType actionType, QString actionName) 
-          : Character(name, initiative, characterType, actionType),
-            actionName_{actionName} {}
+    AttackAction(const Character& base, int attackNumber) 
+          : Character(base),
+            attackNumber_{attackNumber} {}
 
     AttackAction(const AttackAction& other) : Character(other) {}
 
@@ -31,27 +31,21 @@ class AttackAction : public Character {
         return *this;
     }
 
-    QString name() const override { return actionName_; };
-    int initiative() const override { return initiative_ + attackDelay_; };
+    int initiative() const override {
+        if (attackNumber_ <= 0) return initiative_;
+        return initiative_ + (attackNumber_ * weaponSpeed_);
+    }
+    int attackNumber() const { return attackNumber_; }
     QString actionTypeLogEntry() const { return logEntryFor(actionType()); };
     QIcon icon() const override { return IconRepository::iconFor(actionType_); };
     QString text() const override;
     QString combatLog() const override;
-    QString actionName() const { return actionName_; }
-    LayoutSpec layoutSpec() const override {
-        return LayoutSpec{10, 12, 70, 0.9, 30, 0.6, 0.6, 0.6, 0.6}; 
-        // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, 
-        // icon selector icon scale = 60%, clone rect icon scale = 80%, submit rect icon scale = 80%, delete rect icon scale = 80%
-    };
 
     static QString logEntryFor(Cyrus::ActionType type) {
         return QString(actionTypeLogEntries.at(static_cast<int>(type)));
     }
 
     private:
-    // to be implemented will be take from text label in initiative view current item
-    QString actionName_{"Unknown"};
-    int attackDelay_{};
-
+    int attackNumber_{}; // tracks which attack number this is initiative() formula is base initiative_ + (attackNumber_ * weaponSpeed_)
 
 };

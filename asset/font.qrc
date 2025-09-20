@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/">
+    <file>font/Black_Chancery.ttf</file>
+    <file>font/IM_Fell_English.ttf</file>
+  </qresource>
+</RCC>

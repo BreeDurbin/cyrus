@@ -8,20 +8,12 @@ class CastAction : public Character {
 
     CastAction() : Character() {}
 
-    CastAction(QString name, int initiative, Cyrus::CharacterType characterType, QString spellName, int castingTime, int duration) 
-          : Character(name, initiative, characterType, Cyrus::ActionType::Cast),
+    CastAction(const Character& base, QString spellName, int castingTime, int duration) 
+          : Character(base),
             spellName_{spellName},
             castingTime_{castingTime},
             duration_{duration} {}
 
-    CastAction(const CastAction& other) : Character(other) {}
-
-    CastAction& operator=(const CastAction& other) {
-        if (this != &other) {
-            Character::operator=(other);
-        }
-        return *this;
-    }
 
     int initiative() const override {
         // Total initiative before applying rounds passed
@@ -42,18 +34,18 @@ class CastAction : public Character {
     QString text() const override;
     QString combatLog() const override;
     QString spellName() const { return spellName_; }
+    void setCastingFinished() { castingComplete_ = true; }
     int duration() const { return duration_ - roundsPassed_; }
-    void passRound(){ ++roundsPassed_; };
-    LayoutSpec layoutSpec() const override {
-        return LayoutSpec{10, 12, 70, 0.9, 30, 0.6, 0.6, 0.6, 0.6}; 
-        // padding=10, radius=12, preferred height=70px hero icon=90% height, initiative=30px, 
-        // icon selector icon scale = 60%, clone rect icon scale = 80%, submit rect icon scale = 80%, delete rect icon scale = 80%
+    void passRound(){ 
+        ++roundsPassed_; 
+        if(!castingComplete_) setCastingFinished(); 
     };
-
+    
     private:
     QString spellName_{"Unknown"};
     int castingTime_{};
     int duration_{};
     int roundsPassed_{};
+    bool castingComplete_{false};
 
 };

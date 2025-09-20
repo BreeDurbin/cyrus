@@ -1,7 +1,11 @@
 #include "CastAction.h"
 #include <QString>
 
-QString CastAction::text() const { return name() + QString(" is casting ") + spellName_ + QString(" with duration ") + QString::number(duration_); }
+QString CastAction::text() const { 
+    qDebug() << "spellname: " << spellName_;
+    if(!castingComplete_) return name() + QString(" is casting ") + spellName_;
+    return name() + QString(" has cast ") + spellName_;
+}
 
 QString CastAction::combatLog() const {
     qDebug() << "Logging: " << name_ << " cast " << "spellname " << spellName_ << " at initiative " << initiative_;

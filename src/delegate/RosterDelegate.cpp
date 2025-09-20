@@ -23,14 +23,14 @@
 RosterDelegate::RosterDelegate(CharacterController* characterController, QObject *parent) 
     : QStyledItemDelegate(parent), characterController_{characterController} {
         auto* engine = LayoutFactory::rosterLayoutEngine();
-        connect(engine, &RosterLayoutEngine::incrementRosterMemberInitiativeClicked,
-                this,   &RosterDelegate::incrementRosterMemberInitiativeClicked);
-        connect(engine, &RosterLayoutEngine::decrementRosterMemberInitiativeClicked,
-                this,   &RosterDelegate::decrementRosterMemberInitiativeClicked);
+        connect(engine, &RosterLayoutEngine::nextFactionClicked,
+                this,   &RosterDelegate::nextFaction);
+        connect(engine, &RosterLayoutEngine::previousFactionClicked,
+                this,   &RosterDelegate::previousFaction);
         connect(engine, &RosterLayoutEngine::cloneRosterMemberClicked,
-                this,   &RosterDelegate::cloneRosterMemberClicked);
+                this,   &RosterDelegate::cloneRosterMember);
         connect(engine, &RosterLayoutEngine::deleteButtonClicked,
-                this,   &RosterDelegate::deleteButtonClicked);
+                this,   &RosterDelegate::deleteRosterMember);
 }
 
 void RosterDelegate::paint(QPainter* painter,
@@ -55,7 +55,7 @@ void RosterDelegate::paint(QPainter* painter,
     QPoint localCursor = cursorPosInItem(option);
 
     // --- Calculate layout ---
-    auto layout = engine->calculate(option.rect, character);
+    auto layout = engine->calculate(option.rect, character, false, false);
 
     // --- Background ---
     const bool isHovered      = option.state & QStyle::State_MouseOver;
@@ -109,7 +109,7 @@ bool RosterDelegate::editorEvent(QEvent *event,
         auto* engine   = LayoutFactory::rosterLayoutEngine();
 
         // --- Layout ---
-        auto layout = engine->calculate(option.rect, character);
+        auto layout = engine->calculate(option.rect, character, false, false, Cyrus::CombatSequenceState::NPC_DETERMINATION);
 
         // --- Cursor ---
         QPoint localCursor = cursorPosInItem(option, event);
@@ -131,7 +131,7 @@ QSize RosterDelegate::sizeHint(const QStyleOptionViewItem& option,
     const QVariant charVar = index.data(Cyrus::CharacterRole);
     if (!charVar.canConvert<std::shared_ptr<Character>>()) { 
         //Mock character for size hint when the list is empty
-        character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
+        character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, 0, 0, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
     }
     character = charVar.value<std::shared_ptr<Character>>();
 

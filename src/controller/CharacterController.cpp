@@ -7,7 +7,9 @@
 #include "Enums.h"
 #include "CastState.h"
 #include <QTimer>
-
+#include "AttackAction.h"
+#include "MiscAction.h"
+#include <algorithm>
 
 CharacterController::CharacterController(InitiativeView* initiativeView,
                                         CharacterModel* initiativeOrderModel,
@@ -26,12 +28,6 @@ CharacterController::CharacterController(InitiativeView* initiativeView,
     Q_ASSERT(combatLogModel_);
     Q_ASSERT(rosterModel_);
 
-    connect(initiativeOrderModel_, &CharacterModel::segmentUpdate,
-            this, [this](int segment) {
-                emit segmentChangedText(
-                    QString("Segment: %1 / 10").arg(segment));
-            });
-
     connect(initiativeOrderModel_, &CharacterModel::roundUpdate,
             this, [this](int round) {
                 emit roundChangedText(
@@ -42,12 +38,12 @@ CharacterController::CharacterController(InitiativeView* initiativeView,
 }
 
 
-//update model
+//update character model
 void CharacterController::updateAction(const QModelIndex& index, Cyrus::ActionType actionType) {
     std::shared_ptr<Character> character = initiativeOrderModel_->getItem(index);
     if (!character) return;
     // untoggle if same icon is clicked a second time
-    if (character->actionType() == actionType) character->setActionType(Cyrus::ActionType::None);
+    if (character->actionType() == actionType) character->setActionType(Cyrus::ActionType::Unset);
     else character->setActionType(actionType);
     //invalid use of incomplete type ‘class CharacterModel’ here
     emit initiativeOrderModel_->dataChanged(index, index, {Cyrus::CharacterRole});
@@ -64,6 +60,76 @@ void CharacterController::deleteItem(const QModelIndex& index) {
 
     initiativeOrderModel_->removeRow(index.row());
 }
+
+void CharacterController::cancelAction(const QModelIndex& index) {
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+
+    // 1. Reset acted state
+    character->setActed(false);
+
+    // 2. Remove any dependent rows (same uuid, not base class)
+    const QUuid targetUuid = character->uuid();
+
+    // We need to iterate backwards so row removals don’t invalidate subsequent indexes.
+    for (int row = initiativeOrderModel_->rowCount() - 1; row > index.row(); --row) {
+        QModelIndex idx = initiativeOrderModel_->index(row, 0);
+        auto other = initiativeOrderModel_->getItem(idx);
+
+        if (other && other->uuid() == targetUuid) {
+            // Compare dynamic type to base character type
+            if (typeid(*other) != typeid(*character)) {
+                deleteItem(idx);
+            }
+        }
+    }
+}
+
+void CharacterController::decrementInitiative(const QModelIndex& index) {
+    qDebug() << "Decrementing initiative. Is group initiative? " << isGroupInitiative_;
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+
+    int initiative = character->initiative();
+    initiative = std::clamp(initiative - 1, 1, 10);
+
+    if(isGroupInitiative_){
+        auto characters = initiativeOrderModel_->getItems(character->faction());
+        for(auto c : characters){
+            qDebug() << "setting initiative " << character->name() << " to " << initiative;
+            c->setInitiative(initiative);
+            QModelIndex idx = initiativeOrderModel_->indexFromCharacter(c);
+            if (idx.isValid()) {
+                emit initiativeOrderModel_->dataChanged(idx, idx, {Qt::DisplayRole});
+            }
+        }
+        return;
+    }
+    character->setInitiative(initiative);
+}
+
+void CharacterController::incrementInitiative(const QModelIndex& index) {
+    qDebug() << "Incrementing initiative. Is group initiative? " << isGroupInitiative_;
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+
+    int initiative = character->initiative();
+    initiative = std::clamp(initiative + 1, 1, 10);
+
+    if(isGroupInitiative_){
+        auto characters = initiativeOrderModel_->getItems(character->faction());
+        for(auto c : characters){
+            c->setInitiative(initiative);
+            QModelIndex idx = initiativeOrderModel_->indexFromCharacter(c);
+            if (idx.isValid()) {
+                emit initiativeOrderModel_->dataChanged(idx, idx, {Qt::DisplayRole});
+            }
+        }
+        return;
+    }
+    character->setInitiative(initiative);
+}
+
 
 // cast actions
 
@@ -114,22 +180,17 @@ void CharacterController::castSubmitted(const QUuid& id, const std::shared_ptr<C
     auto castState = states_.value(id);
 
     auto castAction = std::make_shared<CastAction>(
-        character->name(),
-        character->initiative(),
-        character->characterType(),
+        *character,
         castState.spellName,
         castState.castingTime,
         castState.duration
     );
 
     initiativeOrderModel_->appendItem(castAction);
-    initiativeOrderModel_->sort();
+    initiativeOrderModel_->sort(0, combatSequenceState_);
+    states_.remove(id); 
 
-    // Defer removal to next event loop cycle to avoid dangling references
-    QTimer::singleShot(0, [this, id](){ 
-        qDebug() << "Removing state for" << id;
-        states_.remove(id); 
-    });
+    character->setActed(true);
 }
 
 // Attack actions
@@ -150,25 +211,91 @@ void CharacterController::incrementAttackAmount(const QModelIndex& index){
     character->setAttackRate(++ar);
 }
 
-void CharacterController::attackSubmitted(const QModelIndex& index){
+void CharacterController::decrementWeaponSpeed(const QModelIndex& index){
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    qDebug() << "Decrementing Weapon Speed for character: " << character->name();
+    int weaponSpeed = character->weaponSpeed();
+    character->setWeaponSpeed(--weaponSpeed);
+}
+
+void CharacterController::incrementWeaponSpeed(const QModelIndex& index){
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    qDebug() << "Incrementing Weapon Speed for character: " << character->name();
+    int weaponSpeed = character->weaponSpeed();
+    character->setWeaponSpeed(++weaponSpeed);
+}
+
+void CharacterController::attackSubmitted(const QModelIndex& index) {
     auto character = initiativeOrderModel_->getItem(index);
     auto attackRate = character->attackRate();
-    qDebug() << "Handling attack Submitted for character " << character->name();
+
+    for (int i = 1; i <= attackRate.attack(); ++i) {
+        qDebug() << "Handling attack Submitted for character " << character->name() << " setting attack number " << i;
+        auto attack = std::make_shared<AttackAction>(*character, i);
+        qDebug() << "name: " << attack->name() << " attackNumber " << attack->attackNumber() << " weapon speed " << attack->weaponSpeed();
+        initiativeOrderModel_->appendItem(attack);
+    }
+
+    character->setActed(true);
+
+    initiativeOrderModel_->sort(index.row() + 1, combatSequenceState_);
+}
+
+// Misc actions
+
+void CharacterController::updateAction(const QModelIndex& index, Cyrus::MiscActionType miscActionType){
+    std::shared_ptr<Character> character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    // untoggle if same icon is clicked a second time
+    if (character->miscActionType() == miscActionType) character->setMiscActionType(Cyrus::MiscActionType::Unset);
+    else character->setMiscActionType(miscActionType);
+    emit initiativeOrderModel_->dataChanged(index, index, {Cyrus::CharacterRole});
+}
+
+void CharacterController::miscSubmitted(const QModelIndex& index) {
+    if (!index.isValid())
+        return;
+
+    // Get the character at this index
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character)
+        return;
+
+    // Mark the character as having acted
+    character->setActed(true);
+
+    // Create a new MiscAction based on the character and the specified type
+    auto miscAction = std::make_shared<MiscAction>(*character);
+
+    // Optionally, set a specific scroll cost or other properties
+    // miscAction->setScrollCost(...);  // if needed
+
+    // Insert the MiscAction into the initiative order right after the original character
+    initiativeOrderModel_->appendItem(miscAction);
+
+    // Re-sort the initiative order starting from the next row
+    int insertRow = index.row() + 1;
+    initiativeOrderModel_->sort(insertRow, combatSequenceState_);
 }
 
 
-// Update initiative of rostered characters
 
-void CharacterController::incrementRosterMemberInitiative(const QModelIndex& index) {
-    qDebug() << "Incrementing initiative.";
+// Update faction of rostered characters
+
+void CharacterController::nextFaction(const QModelIndex& index) {
+    qDebug() << "Cycling to next faction.";
     auto character = rosterModel_->getItem(index);
-    character->setInitiative(std::min(10, character->initiative() + 1));
+    Cyrus::Faction nextFaction = Cyrus::nextFaction(character->faction());
+    character->setFaction(nextFaction);
 }
 
-void CharacterController::decrementRosterMemberInitiative(const QModelIndex& index) {
-    qDebug() << "Decrementing initiative.";
+void CharacterController::previousFaction(const QModelIndex& index) {
+    qDebug() << "Cycling to previous faction.";
     auto character = rosterModel_->getItem(index);
-    character->setInitiative(std::max(0, character->initiative() - 1));
+    Cyrus::Faction prevFaction = Cyrus::prevFaction(character->faction());
+    character->setFaction(prevFaction);
 }
 
 // clone a rostered character
@@ -194,14 +321,14 @@ void CharacterController::addRosterToInitiative() {
     }
 
     // Sort initiative after adding
-    initiativeOrderModel_->sort(0);
+    initiativeOrderModel_->sort(0, combatSequenceState_);
 
     // Ensure something is selected
     if (!initiativeView_->hasActiveIndex() && initiativeOrderModel_->rowCount() > 0) {
         QModelIndex first = initiativeOrderModel_->index(0, 0);
         initiativeView_->setActiveIndex(first);
         // set the starting segment to the initiative of the character first in the order
-        initiativeOrderModel_->advanceSegment(initiativeOrderModel_->getItem(first)->initiative());
+        initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(first)->initiative());
     }
 }
 
@@ -209,16 +336,36 @@ void CharacterController::addRosterMemberToInitiative(const QModelIndex& index) 
     if (std::shared_ptr<Character> character = rosterModel_->getItem(index)) {
         qDebug() << "Adding roster member to initiative: " << character->name();
         initiativeOrderModel_->appendItem(character);
-        initiativeOrderModel_->sort(0);
+        initiativeOrderModel_->sort(0, combatSequenceState_);
 
         if (!initiativeView_->hasActiveIndex() && initiativeOrderModel_->rowCount() > 0) {
             QModelIndex first = initiativeOrderModel_->index(0, 0);
             initiativeView_->setActiveIndex(first);
             // set the starting segment to the initiative of the character first in the order
-            initiativeOrderModel_->advanceSegment(initiativeOrderModel_->getItem(first)->initiative());
+            initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(first)->initiative());
         }
     }
 }
+
+void CharacterController::nextCombatSequenceState(){
+    int next = (static_cast<int>(combatSequenceState_) + 1) % 4;
+    combatSequenceState_ = static_cast<Cyrus::CombatSequenceState>(next);
+    initiativeOrderModel_->sort(0, combatSequenceState_);
+    emit combatSequenceStateChanged(combatSequenceState_);
+}
+
+void CharacterController::previousCombatSequenceState(){
+    int previous = (static_cast<int>(combatSequenceState_) - 1);
+    // its ok to hard code this because no future sequence additions will ever happen. 
+    // The combat sequence in adnd2e is set in stone in the phb
+    //  once additional systems are supported this will need to be pulled out 
+    // into a 2e specific subclass controllers
+    if(previous < 0) previous = 3;
+    combatSequenceState_ = static_cast<Cyrus::CombatSequenceState>(previous);
+    initiativeOrderModel_->sort(0, combatSequenceState_);
+    emit combatSequenceStateChanged(combatSequenceState_);
+}
+
 
 void CharacterController::advanceInitiative() {
     // Validation checks
@@ -236,65 +383,57 @@ void CharacterController::advanceInitiative() {
     std::shared_ptr<Character> character = initiativeOrderModel_->getItem(currentIndex);
     if (!character) return;
 
-    bool removedCurrent = false;
-
-    // --- Handle CastAction specifics ---
-    if (auto castAction = std::dynamic_pointer_cast<CastAction>(character)) {
-        if (castAction->duration() == 0) {
-            initiativeOrderModel_->removeItem(currentIndex);
-            removedCurrent = true;
-        } else { castAction->passRound(); } // duration will decrement 
-    }
+    // remove if the current action expires (atack finished, spell duration ended)
+    bool isRemoved = progressAction(currentIndex, character);
 
     // --- Log the action ---
     combatLogModel_->appendItem(character);
+    emit requestScrollCombatLogToBottom();
 
     // --- Compute next active index ---
-    int nextRow;
-    if (removedCurrent) {
-        // If the current row was removed, rows shifted up → reuse same row index
-        nextRow = std::min(currentIndex.row(), initiativeOrderModel_->rowCount() - 1);
-    } else {
-        nextRow = currentIndex.row() + 1;
-    }
+    QModelIndex nextIndex = getNextIndex(currentIndex, isRemoved);
 
+    // --- If there are any items left, move the active index to next and advance the models current initaitive to the next row --- 
     if (initiativeOrderModel_->rowCount() > 0) {
-        // wrap around index to nextround if there are no more cards in the round
-        if(nextRow >= initiativeOrderModel_->rowCount()) nextRow = 0;
-           
-        // if the next card has initiative > 10 pass round on the rest of the cards in the initiative
-        QModelIndex nextIndex = initiativeOrderModel_->index(nextRow, 0);
         auto nextCharacter = initiativeOrderModel_->getItem(nextIndex);
-        if(nextCharacter->initiative() > 10){
-            // advance the round on all action cardss which move into the next round > sesgment 10 rolls over
-            passRoundOnHighInitiative(nextIndex);
-            //wrap around to the next round
-            auto zerothIndex = initiativeOrderModel_->index(0, 0);
-            initiativeView_->setActiveIndex(zerothIndex);
-            int nextSegment = initiativeOrderModel_->getItem(zerothIndex)->initiative();
-            initiativeOrderModel_->advanceSegment(nextSegment);
-        }
-        //otherwise advance the segment in the model and update the active index in the view
-        else {
-            initiativeView_->setActiveIndex(nextIndex);
-            initiativeOrderModel_->advanceSegment(nextCharacter->initiative());
-        }
+        initiativeView_->setActiveIndex(nextIndex);
+        initiativeOrderModel_->advanceInitiative(nextCharacter->initiative());
+        emit currentInitiativeChanged(nextIndex);
     }
-    // --- Scroll combat log ---
-    emit requestScrollCombatLogToBottom();
+
 }
 
-void CharacterController::passRoundOnHighInitiative(const QModelIndex& index){
-    //pass round on each card which is out of scope for the round // initiative() > 10 rolls over to next round
-    for (int i = index.row(); i < initiativeOrderModel_->rowCount(); ++i) {
-        if (auto castAction = std::dynamic_pointer_cast<CastAction>(initiativeOrderModel_->getItem(initiativeOrderModel_->index(i, 0)))) {
-            if( castAction->initiative() > 10 ) castAction->passRound(); // 
+bool CharacterController::progressAction(const QModelIndex& index, std::shared_ptr<Character> character){
+    // --- Handle CastAction specifics ---
+    if (auto castAction = std::dynamic_pointer_cast<CastAction>(character)) {
+        if (castAction->duration() == 0) {
+            initiativeOrderModel_->removeItem(index);
+            return true;
+        } else { 
+            castAction->passRound(); // decrement duration
         }
     }
-    // Re-sort initiative order after updating effective initiatives
-    initiativeOrderModel_->sort();
+
+    // --- Handle AttackAction specifics ---
+    if (auto attackAction = std::dynamic_pointer_cast<AttackAction>(character)) {
+        initiativeOrderModel_->removeItem(index);
+        return true;
+    }
+
+    // --- Handle Misc Magic item specifics ---
+    if (auto miscAction = std::dynamic_pointer_cast<MiscAction>(character)) {
+        initiativeOrderModel_->removeItem(index);
+        return true;
+    }
+    return false;
 }
 
+// get next row, if deleted current item then that would be the current index, other wise do wrap around
+QModelIndex CharacterController::getNextIndex(const QModelIndex& index, bool isRemoved){
+    int next = isRemoved ? index.row() : ( index.row() + 1 ); // next index increment
+    next = next >= initiativeOrderModel_->rowCount() ? 0 : next; //wrap around
+    return initiativeOrderModel_->index(next, 0);
+}
 
 void CharacterController::backtrackInitiative() {
     if(!initiativeView_->hasActiveIndex()) return;
@@ -314,15 +453,16 @@ void CharacterController::backtrackInitiative() {
 
     if (std::shared_ptr<Character> character = initiativeOrderModel_->getItem(previousIndex)) {
         // Backtrack initiative segment
-        initiativeOrderModel_->backtrackSegment(character->initiative());
+        initiativeOrderModel_->backtrackInitiative(character->initiative());
     }
 
     initiativeView_->setActiveIndex(previousIndex);
+    emit currentInitiativeChanged(previousIndex);
 }
 
-QModelIndex CharacterController::addToRoster(const QString &name, int initiative, Cyrus::CharacterType type){
-    rosterModel_->appendItem(name, initiative, type);
-    // Index of newly added row
+QModelIndex CharacterController::addToRoster(const QString &name, Cyrus::CharacterType type){
+    rosterModel_->appendItem(std::make_shared<Character>(name, 0, 2, 0, type));
+    isRosterModified_ = true;
     return rosterModel_->index(rosterModel_->rowCount() - 1, 0);
 }
 
@@ -338,6 +478,8 @@ void CharacterController::saveRoster(const std::string& roster) {
     }
 
     TomlHelper::saveRepository(roster + ".toml", characters);
+    isRosterModified_ = false;
+    currentRosterName_ = roster;
 }
 
 QModelIndex CharacterController::loadRoster(const std::string& roster) {
@@ -345,18 +487,23 @@ QModelIndex CharacterController::loadRoster(const std::string& roster) {
     // Clear the current roster in the controller
     rosterModel_->clear();
 
+    // clear to prevent the num cache from just repeatedly counting up when roster loads happen repeatedly
+    Character::clearNumberCache();
+
     qDebug() << "Loading roster... " << roster;
 
     const auto& characters = TomlHelper::loadRepository(roster + ".toml");
     qDebug() << "Loaded " << characters.size() << " characters.";
 
     rosterModel_->addItems(characters);
+    isRosterModified_ = false;
+    currentRosterName_ = roster;
+
     return rosterModel_->index(rosterModel_->rowCount() - 1, 0);
 }
 
 void CharacterController::clearInitiativeOrder(){
     initiativeOrderModel_->clear();
-    initiativeOrderModel_->segmentUpdate(0);
     initiativeOrderModel_->roundUpdate(1);
 }
 

@@ -18,20 +18,37 @@
 #include "LayoutEngine.h"
 #include <QLineEdit>
 #include <QPainterPath>
+#include "CharacterLayoutEngine.h"
+#include "AttackActionLayoutEngine.h"
+#include "CastActionLayoutEngine.h"
+#include "MiscActionLayoutEngine.h"
+#include "MiscAction.h"
 
 #include<iostream>
 
 InitiativeDelegate::InitiativeDelegate(CharacterController* characterController, QObject *parent) 
     : QStyledItemDelegate(parent), characterController_{characterController} {
 
-    //get layout engines
+    // character layout engine
     auto* characterLayoutEngine = static_cast<CharacterLayoutEngine*>(LayoutFactory::forCharacterType<Character>());
-    //const auto& castActionLayoutengine = LayoutFactory::forCharacterType<CastAction>();   //need this later
-    //const auto& attackActionLayoutEngine = LayoutFactory::forCharacterType<AttackAction>();  // need this later
 
-    //Chain character Layout Engine signals to initiative delegate signals
+    // main row
+    connect(characterLayoutEngine, &CharacterLayoutEngine::deleteItemClicked,
+            this, &InitiativeDelegate::deleteItem);
 
-    //Cast actions
+    connect(characterLayoutEngine, QOverload<const QModelIndex&, Cyrus::ActionType>::of(&CharacterLayoutEngine::iconSelectorClicked),
+            this,                  QOverload<const QModelIndex&, Cyrus::ActionType>::of(&InitiativeDelegate::iconSelected));
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::cancelActionClicked,
+        this, &InitiativeDelegate::cancelAction);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementInitiativeClicked,
+            this, &InitiativeDelegate::decrementInitiative);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementInitiativeClicked,
+            this, &InitiativeDelegate::incrementInitiative);
+
+    //Cast action dropdown
     connect(characterLayoutEngine, &CharacterLayoutEngine::spellNameEdited,
             this, &InitiativeDelegate::spellNameEdited);
 
@@ -50,24 +67,54 @@ InitiativeDelegate::InitiativeDelegate(CharacterController* characterController,
     connect(characterLayoutEngine, &CharacterLayoutEngine::castSubmitClicked,
             this, &InitiativeDelegate::castSubmitted);
 
-    connect(characterLayoutEngine, &CharacterLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItem);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::iconSelectorClicked,
-            this, &InitiativeDelegate::iconSelected);
-
-    // Attack actions
+    // Attack action dropdown
     connect(characterLayoutEngine, &CharacterLayoutEngine::decrementAttackAmountClicked,
             this, &InitiativeDelegate::decrementAttackAmount);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::incrementAttackAmountClicked,
             this, &InitiativeDelegate::incrementAttackAmount);
+    
+    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementWeaponSpeedClicked,
+            this, &InitiativeDelegate::decrementWeaponSpeed);
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementWeaponSpeedClicked,
+            this, &InitiativeDelegate::incrementWeaponSpeed);
 
     connect(characterLayoutEngine, &CharacterLayoutEngine::attackSubmitClicked,
             this, &InitiativeDelegate::attackSubmitted);
 
+    // Misc action dropdown
+
+    connect(characterLayoutEngine, QOverload<const QModelIndex&, Cyrus::MiscActionType>::of(&CharacterLayoutEngine::iconSelectorClicked),
+            this,                  QOverload<const QModelIndex&, Cyrus::MiscActionType>::of(&InitiativeDelegate::iconSelected));
+
+    connect(characterLayoutEngine, &CharacterLayoutEngine::miscSubmitClicked,
+            this, &InitiativeDelegate::miscSubmitted);
+
+    //attack action layout engine
+    auto* attackActionLayoutEngine = static_cast<AttackActionLayoutEngine*>(LayoutFactory::forCharacterType<AttackAction>());
+
+    connect(attackActionLayoutEngine, &AttackActionLayoutEngine::deleteItemClicked,
+            this, &InitiativeDelegate::deleteItem);
+
+    // cast action layout engine
+
+    auto* castActionLayoutEngine = static_cast<CastActionLayoutEngine*>(LayoutFactory::forCharacterType<CastAction>());
+
+    connect(castActionLayoutEngine, &CastActionLayoutEngine::deleteItemClicked,
+            this, &InitiativeDelegate::deleteItem);
+
+    // misc action layout engine
+
+    auto* miscActionLayoutEngine = static_cast<MiscActionLayoutEngine*>(LayoutFactory::forCharacterType<MiscAction>());
+
+    connect(miscActionLayoutEngine, &MiscActionLayoutEngine::deleteItemClicked,
+            this, &InitiativeDelegate::deleteItem);
 }
 
+
+#include <QDebug>
+#include <typeinfo>
 
 void InitiativeDelegate::paint(QPainter* painter,
                                const QStyleOptionViewItem& option,
@@ -75,48 +122,47 @@ void InitiativeDelegate::paint(QPainter* painter,
 {
     painter->save();
 
+    // character payload
     const QVariant charVar = index.data(Cyrus::CharacterRole);
-    if (!charVar.canConvert<std::shared_ptr<Character>>()) { painter->restore(); return; }
+    if (!charVar.canConvert<std::shared_ptr<Character>>()) { 
+        painter->restore(); 
+        return; 
+    }
+
     auto character = charVar.value<std::shared_ptr<Character>>();
-    const Character::LayoutSpec& spec = character->layoutSpec();
+    if (!character) {
+        painter->restore();
+        return;
+    }
+
+    // local vars
+    const LayoutSpec& spec = character->layoutSpec();
     const CastState castState = characterController_->stateFor(character->uuid());
+    const Cyrus::CombatSequenceState state = characterController_->combatSequenceState();
 
     // State checks
-    bool isActiveIndex    = checkActiveIndex(index, option);
-    bool isCurrentSegment = checkCurrentSegment(index, character->initiative());
-    bool isHovered        = checkHovered(option);
-    bool isExpanded       = checkExpanded(isActiveIndex, character);
-    bool isCharacter      = checkIfCharacter(character);
+    bool isSelectedIndex     = checkSelectedIndex(index, option, state, character);
+    bool isCurrentInitiative = checkCurrentInitiative(index, character->initiative());
+    bool isHovered           = checkHovered(option);
+    bool isExpanded          = checkExpanded(isSelectedIndex, character);
+    bool isCharacter         = checkIfCharacter(character);
+
 
     QPoint localCursor = cursorPosInItem(option);
 
     const auto& engine = LayoutFactory::forCharacter(*character);
 
     // Use static layout engine
-    const auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
+    
+    const auto layout = engine->calculate(option.rect, character, isSelectedIndex, isExpanded, state);
 
-    // --- Background ---
-    auto pickColor = [](bool isActiveIndex, bool isCurrentSegment) {
-        if(isActiveIndex) return ColorRepository::selectedBackground();
-        if(isCurrentSegment) return ColorRepository::segmentBackground();
-        return ColorRepository::baseBackground();
-    };
-
-    QColor bg = pickColor(isActiveIndex, isCurrentSegment);
+    // paint background
+    QColor bg = backgroundForState(state, character, isSelectedIndex, isCurrentInitiative);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setPen(Qt::NoPen);
     painter->setBrush(bg);
     painter->drawRoundedRect(layout->baseRect, spec.cornerRadius, spec.cornerRadius);
-
-    // --- Hover outline ---
-    if (isHovered || isActiveIndex) {
-        QPen hoverPen(ColorRepository::hoverOutlineBrush(layout->baseRect), 1.5);
-        painter->setPen(hoverPen);
-        painter->setBrush(Qt::NoBrush);
-        painter->drawRoundedRect(layout->baseRect.adjusted(-3, -3, 3, 3),
-                                 spec.cornerRadius, spec.cornerRadius);
-    }
 
     // --- Paint the layout ---
     engine->paintLayout(
@@ -124,9 +170,10 @@ void InitiativeDelegate::paint(QPainter* painter,
         layout, 
         character, 
         castState, 
-        isActiveIndex, 
+        isSelectedIndex, 
         isExpanded, 
-        localCursor
+        localCursor,
+        state
     ); 
 
     painter->restore();
@@ -149,22 +196,21 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         if (!charVar.canConvert<std::shared_ptr<Character>>()) { return false; }
         auto character = charVar.value<std::shared_ptr<Character>>();
 
-        bool isActiveIndex = checkActiveIndex(index, option);
-        bool isExpanded    = checkExpanded(isActiveIndex, character);
-        QPoint localCursor = cursorPosInItem(option, event);
+        const Cyrus::CombatSequenceState state = characterController_->combatSequenceState();
+
+        bool isSelectedIndex = checkSelectedIndex(index, option, state, character);
+        bool isExpanded      = checkExpanded(isSelectedIndex, character);
+        QPoint localCursor   = cursorPosInItem(option, event);
 
         QUuid id = character->uuid();
         auto clamp = [](int v, int lo, int hi){ return std::max(lo, std::min(hi, v)); };
 
         auto* engine = LayoutFactory::forCharacter(*character);
-        auto layout = engine->calculate(option.rect, character, isActiveIndex, isExpanded);
-        auto callback = engine->hitTest(index, layout, character, localCursor);
+        auto layout = engine->calculate(option.rect, character, isSelectedIndex, isExpanded, state);
+        auto callback = engine->hitTest(index, layout, character, localCursor, state);
         if(callback){
             callback->execute(view);
-            qDebug() << "Finished execution 1";
-            //Repaint the updated item
             if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
-            qDebug() << "Finished execution 2";
             return true;
         }
     }
@@ -182,6 +228,15 @@ QWidget* InitiativeDelegate::createEditor(QWidget* parent, const QStyleOptionVie
     auto* editor = new QLineEdit(parent);
     editor->setStyleSheet(StyleRepository::lineEdit());
     editor->setAutoFillBackground(true); // Make the lineedit paint its own background
+
+    // --- Update spell name on each keystroke ---
+    connect(editor, &QLineEdit::textChanged, this, [this, editor, index](const QString& text) {
+        auto charVar = index.data(Cyrus::CharacterRole);
+        if (!charVar.canConvert<std::shared_ptr<Character>>()) return;
+        auto character = charVar.value<std::shared_ptr<Character>>();
+
+        emit spellNameEdited(character->uuid(), text);
+    });
 
     // Commit on Enter
     connect(editor, &QLineEdit::returnPressed, this, [this, editor]() {
@@ -238,12 +293,14 @@ void InitiativeDelegate::updateEditorGeometry(QWidget* editor,
     if (!charVar.canConvert<std::shared_ptr<Character>>()) { return; }
     auto character = charVar.value<std::shared_ptr<Character>>();
 
+    const Cyrus::CombatSequenceState state = characterController_->combatSequenceState();
+
     // populate bools
-    bool isActiveIndex = checkActiveIndex(index, option);
-    bool isExpanded    = checkExpanded(isActiveIndex, character);
+    bool isSelectedIndex = checkSelectedIndex(index, option, state, character);
+    bool isExpanded    = checkExpanded(isSelectedIndex, character);
 
     // calculate rects
-    const auto layout = LayoutFactory::forCharacter(*character)->calculate(option.rect, character, isActiveIndex, isExpanded);
+    const auto layout = LayoutFactory::forCharacter(*character)->calculate(option.rect, character, isSelectedIndex, isExpanded);
     // needs to be casted to character layout
     const auto cLayout = std::static_pointer_cast<CharacterLayout>(layout);
 
@@ -259,38 +316,74 @@ QSize InitiativeDelegate::sizeHint(const QStyleOptionViewItem& option,
     const QVariant charVar = index.data(Cyrus::CharacterRole);
     if (!charVar.canConvert<std::shared_ptr<Character>>()) { 
         //Mock character for size hint when the list is empty
-        character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
+        character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, 0, 0, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
     }
     character = charVar.value<std::shared_ptr<Character>>();
 
-    const int width     = LayoutFactory::forCharacter(*character)->minimumWidth(character);
-    bool isActiveIndex = checkActiveIndex(index, option);
-    bool isExpanded    = checkExpanded(isActiveIndex, character);
+    const Cyrus::CombatSequenceState state = characterController_->combatSequenceState();
+
+    const int width      = LayoutFactory::forCharacter(*character)->minimumWidth(character);
+    bool isSelectedIndex = checkSelectedIndex(index, option, state, character);
+    bool isExpanded      = checkExpanded(isSelectedIndex, character);
     const int preferredHeight = character->layoutSpec().preferredHeight;
     int height = isExpanded ? 2 * preferredHeight : preferredHeight;
     return QSize(width, height);
 }
 
 
-bool InitiativeDelegate::checkActiveIndex(const QModelIndex& index, const QStyleOptionViewItem& option) const {
-    auto v = qobject_cast<const InitiativeView*>(option.widget);
-    bool result = v && (v->activeIndex() == index);
-    //qDebug() << "checkActiveIndex: row" << index.row() << "active?" << result;
-    return result;
+bool InitiativeDelegate::checkSelectedIndex(
+    const QModelIndex& index, 
+    const QStyleOptionViewItem& option, 
+    const Cyrus::CombatSequenceState state,
+    const std::shared_ptr<Character>& character) const 
+{
+    // Helper: has the character acted?
+    bool notActed = !character->hasActed();
+
+    switch (state) {
+        case Cyrus::CombatSequenceState::NPC_DETERMINATION:
+            if (notActed && character->faction() == Cyrus::Faction::Red)
+                return true;
+            break;
+
+        case Cyrus::CombatSequenceState::PLAYER_DETERMINATION:
+            if (notActed && character->faction() == Cyrus::Faction::Blue)
+                return true;
+            break;
+
+        case Cyrus::CombatSequenceState::INITIATIVE:
+            if (notActed)
+                return true;
+            break;
+
+        case Cyrus::CombatSequenceState::RESOLUTION:
+            {
+                auto v = qobject_cast<const InitiativeView*>(option.widget);
+                return v && (v->activeIndex() == index);
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    return false;
 }
 
 bool InitiativeDelegate::checkExpanded(bool isActiveIndex, std::shared_ptr<Character> character) const {
     //Only expand for characters(base class) not actions
     if (character && typeid(*character) == typeid(Character)) {
-        return isActiveIndex && character->actionType() != Cyrus::ActionType::None;
+        return isActiveIndex && !character->hasActed() && character->actionType() != Cyrus::ActionType::Unset;
     }
     return false;
 }
 
-bool InitiativeDelegate::checkCurrentSegment(const QModelIndex& index, const int currentInitiative) const {
-    const QVariant segmentVar = index.data(Cyrus::ModelRoles::SegmentRole);
-    const int currentSegment = !segmentVar.canConvert<int>() ? 0 : segmentVar.value<int>();
-    return currentInitiative == currentSegment;
+bool InitiativeDelegate::checkCurrentInitiative(const QModelIndex& index, const int characterInitiative) const {
+    // get initiative payload
+    const QVariant initiativeVar = index.data(Cyrus::ModelRoles::InitiativeRole);
+    const int currentInitiative = initiativeVar.canConvert<int>() ? initiativeVar.value<int>() : 0;
+    // true if the current items initiative is equal to the models current initiative
+    return characterInitiative == currentInitiative;
 }
 
 bool InitiativeDelegate::checkHovered(const QStyleOptionViewItem &option) const {
@@ -312,3 +405,45 @@ QPoint InitiativeDelegate::cursorPosInItem(const QStyleOptionViewItem& option, c
     }
     return option.widget->mapFromGlobal(QCursor::pos());
 }
+
+// --- Background helper ---
+QColor InitiativeDelegate::backgroundForState(const Cyrus::CombatSequenceState state,
+                                 const std::shared_ptr<Character>& character,
+                                 bool isActiveIndex,
+                                 bool isCurrentInitiative) const {
+    switch (state) {
+        case Cyrus::CombatSequenceState::NPC_DETERMINATION: {
+            if (character->faction() != Cyrus::Faction::Blue) {
+                qDebug() << "NPC for npc determination";
+                // gray out the background if thheir action is already submitted
+                return character->hasActed() ? ColorRepository::segmentBackground() : ColorRepository::selectedBackground();
+            }
+            return Qt::transparent;
+        }
+
+        case Cyrus::CombatSequenceState::PLAYER_DETERMINATION: {
+            if (character->faction() == Cyrus::Faction::Blue) {
+                qDebug() << "PC for PC determination";
+                // gray out the background if thheir action is already submitted
+                return character->hasActed() ? ColorRepository::segmentBackground() : ColorRepository::selectedBackground();
+            }
+            return Qt::transparent;
+        }
+
+        case Cyrus::CombatSequenceState::INITIATIVE: {
+            qDebug() << "Initiative state";
+            return ColorRepository::selectedBackground();
+        }
+
+        case Cyrus::CombatSequenceState::RESOLUTION: {
+            qDebug() << "Resolution state";
+            if (isActiveIndex) return ColorRepository::selectedBackground();
+            if (isCurrentInitiative) return ColorRepository::segmentBackground();
+            return ColorRepository::baseBackground();
+        }
+    }
+
+    // Safety fallback
+    return Qt::transparent;
+}
+

@@ -17,9 +17,10 @@ namespace StyleRepository
     QString lineEdit();
     QString comboBox();
 
-    QFont labelFont(int pointSize = 12, bool bold = false);
-    QFont labelPlaceholderFont(int pointSize = 12);
-    QFont progressFont(int pointSize = 12, bool bold = false);
+    QString titleFontFamily();
+    QFont titleFont(int pointSize = 12, bool bold = false);
+    QString textFontFamily();
+    QFont textFont(int pointSize = 12, bool bold = false);
     int progressArcWidth();
     
 }

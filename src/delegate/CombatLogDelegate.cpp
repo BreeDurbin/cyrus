@@ -15,29 +15,38 @@
 CombatLogDelegate::CombatLogDelegate(QObject *parent) : QStyledItemDelegate(parent) {}
 
 // ----------------- Painting -----------------
+// ----------------- Painting -----------------
 void CombatLogDelegate::paint(QPainter* painter,
                               const QStyleOptionViewItem& option,
                               const QModelIndex& index) const
 {
     painter->save();
 
-    qDebug() << "Painting";
-
     const QVariant charVar = index.data(Cyrus::CharacterRole);
-    if (!charVar.canConvert<std::shared_ptr<Character>>()) { return; }
+    if (!charVar.canConvert<std::shared_ptr<Character>>()) {
+        qDebug() << "Combat Log: Index data cannot convert to Character";
+        painter->restore();
+        return;
+    }
     auto character = charVar.value<std::shared_ptr<Character>>();
 
-    const Character::LayoutSpec& spec = character->layoutSpec();
+    const LayoutSpec& spec = character->layoutSpec();
     const int padding = spec.padding;
 
-    // Base rects
-    QRect baseRect    = LayoutUtils::padRectangle(option.rect, spec.padding);
+    // Base rect
+    QRect baseRect = LayoutUtils::padRectangle(option.rect, spec.padding);
+
     LayoutUtils::LeftAnchorBuilder left(baseRect);
+
+    // Hero icon
     QRect heroIconRect = left.icon(spec.heroIconScale, padding);
 
-    // build text rect right side is not a rectangle it is the right side of base rect
+    // Text rect
+    int textWidth = baseRect.width() - (heroIconRect.right() - baseRect.left()) - 2 * padding;
+    QRect textRect = left.text(textWidth, padding);
+
+    // Right boundary (if needed)
     QRect rightBoundary(baseRect.right(), baseRect.top(), 0, baseRect.height());
-    QRect textRect = left.text(heroIconRect.left() - baseRect.right(), padding);
 
     // Background
     painter->setBrush(option.state & QStyle::State_Selected
@@ -46,22 +55,23 @@ void CombatLogDelegate::paint(QPainter* painter,
     painter->setPen(Qt::NoPen);
     painter->drawRect(baseRect);
 
-    // Hero icon (from Character, not data roles)
+    // Hero icon painting
     const QIcon heroIcon = IconRepository::iconFor(character->characterType());
     if (!heroIcon.isNull()) {
-        heroIcon.paint(painter, heroIconRect, Qt::AlignCenter,
-                    QIcon::Normal, QIcon::On);
+        heroIcon.paint(painter, heroIconRect, Qt::AlignCenter, QIcon::Normal, QIcon::On);
+    } else {
+        qDebug() << "Combat log: Hero icon is null";
     }
 
-    // Text (from Character)
+    // Text painting
     painter->setPen(ColorRepository::text());
     painter->drawText(textRect,
-                    Qt::AlignVCenter | Qt::AlignLeft | Qt::TextWordWrap,
-                    character->combatLog());
-
+                      Qt::AlignVCenter | Qt::AlignLeft | Qt::TextWordWrap,
+                      character->combatLog());
 
     painter->restore();
 }
+
 
 QSize CombatLogDelegate::sizeHint(const QStyleOptionViewItem& option,
                                   const QModelIndex& index) const
@@ -73,7 +83,7 @@ QSize CombatLogDelegate::sizeHint(const QStyleOptionViewItem& option,
     }
 
     auto character = charVar.value<std::shared_ptr<Character>>();
-    const Character::LayoutSpec& spec = character->layoutSpec();
+    const LayoutSpec& spec = character->layoutSpec();
     const int padding = spec.padding;
 
     // Start with padded base rect

@@ -43,8 +43,8 @@ QVariant CharacterModel::data(const QModelIndex &index, int role) const {
             return QSize(80, 50);
         case Cyrus::ModelRoles::CharacterRole:
             return QVariant::fromValue(item);
-        case Cyrus::ModelRoles::SegmentRole:
-            return QVariant::fromValue(segment_);
+        case Cyrus::ModelRoles::InitiativeRole:
+            return QVariant::fromValue(initiative_);
         case Cyrus::ModelRoles::RoleTypeRole: {
             auto item = items_.at(index.row());
             // ensure it's really a base Character, not some derived Action type
@@ -80,7 +80,7 @@ QHash<int, QByteArray> CharacterModel::roleNames() const {
 
     // Custom roles
     roles[Cyrus::ModelRoles::CharacterRole]      = "character";
-    roles[Cyrus::ModelRoles::SegmentRole]        = "segment";
+    roles[Cyrus::ModelRoles::InitiativeRole]     = "initiative";
     roles[Cyrus::ModelRoles::RoleTypeRole]       = "roletyperole";
     roles[Cyrus::ModelRoles::SpellNameEditRole]  = "spellnameeditrole";
     roles[Cyrus::ModelRoles::ActionNameEditRole] = "actionnameeditrole";
@@ -101,20 +101,68 @@ Qt::ItemFlags CharacterModel::flags(const QModelIndex &index) const {
     return f;
 }
 
-void CharacterModel::sort(int /*column*/, Qt::SortOrder order) {
-    beginResetModel(); // informs the view the whole model is changing
-    if(order == Qt::AscendingOrder){
-        std::sort(items_.begin(), items_.end(),
-            [](const std::shared_ptr<Character>& lhs, const std::shared_ptr<Character>& rhs){
+void CharacterModel::sort(int row, Cyrus::CombatSequenceState state) {
+    if (row < 0 || row >= items_.size()) return;
+
+    auto begin = items_.begin() + row;
+    auto end   = items_.end();
+
+    switch (state) {
+    case Cyrus::CombatSequenceState::PLAYER_DETERMINATION:
+        // Blue faction first, then initiative
+        std::sort(begin, end,
+            [](const std::shared_ptr<Character>& lhs,
+               const std::shared_ptr<Character>& rhs) {
+                bool lhsBlue = lhs->faction() == Cyrus::Faction::Blue;
+                bool rhsBlue = rhs->faction() == Cyrus::Faction::Blue;
+                if (lhsBlue != rhsBlue) return lhsBlue;
                 return lhs->initiative() < rhs->initiative();
             });
-    } else {
-        std::sort(items_.begin(), items_.end(),
-            [](const std::shared_ptr<Character>& lhs, const std::shared_ptr<Character>& rhs){
-                return lhs->initiative() > rhs->initiative();
+        break;
+
+    case Cyrus::CombatSequenceState::NPC_DETERMINATION:
+        // Non-Blue faction first, then initiative
+        std::sort(begin, end,
+            [](const std::shared_ptr<Character>& lhs,
+               const std::shared_ptr<Character>& rhs) {
+                bool lhsBlue = lhs->faction() == Cyrus::Faction::Blue;
+                bool rhsBlue = rhs->faction() == Cyrus::Faction::Blue;
+                if (lhsBlue != rhsBlue) return !lhsBlue;
+                return lhs->initiative() < rhs->initiative();
             });
+        break;
+
+    case Cyrus::CombatSequenceState::INITIATIVE:
+        // Characters (base class) before derived types, then initiative
+        std::sort(begin, end,
+            [](const std::shared_ptr<Character>& lhs,
+               const std::shared_ptr<Character>& rhs) {
+                bool lhsIsCharacter = typeid(*lhs) == typeid(Character);
+                bool rhsIsCharacter = typeid(*rhs) == typeid(Character);
+                if (lhsIsCharacter != rhsIsCharacter)
+                    return lhsIsCharacter;
+                return lhs->initiative() < rhs->initiative();
+            });
+        break;
+
+    case Cyrus::CombatSequenceState::RESOLUTION:
+        // Initiative only
+        std::sort(begin, end,
+            [](const std::shared_ptr<Character>& lhs,
+               const std::shared_ptr<Character>& rhs) {
+                return lhs->initiative() < rhs->initiative();
+            });
+        break;
     }
-    endResetModel(); // emits layoutChanged, resets selection, etc.
+
+    emit layoutChanged(); // notify without resetting everything
+}
+
+QModelIndex CharacterModel::indexFromCharacter(const std::shared_ptr<Character>& character) const {
+    auto it = rowMap_.find(character);
+    if (it == rowMap_.end())
+        return QModelIndex(); // invalid if not found
+    return index(it.value(), 0, QModelIndex());
 }
 
 bool CharacterModel::removeRows(int row, int count, const QModelIndex &parent) {
@@ -123,7 +171,16 @@ bool CharacterModel::removeRows(int row, int count, const QModelIndex &parent) {
 
     beginRemoveRows(parent, row, row + count - 1);
     for (int i = 0; i < count; ++i) {
+        auto character = items_.at(row);
+
+        factionMap_.remove(character->faction(), character);
+        rowMap_.remove(character);
         items_.removeAt(row);
+    }
+
+    // Rebuild rowMap_ from 'row' onward since rows shift
+    for (int i = row; i < items_.size(); ++i) {
+        rowMap_[items_[i]] = i;
     }
     endRemoveRows();
     return true;
@@ -132,7 +189,6 @@ bool CharacterModel::removeRows(int row, int count, const QModelIndex &parent) {
 std::shared_ptr<Character> CharacterModel::getItem(const QModelIndex &index) {
     if (!index.isValid() || index.row() < 0 || index.row() >= items_.size())
         return nullptr;
-
     return items_[index.row()];
 }
 
@@ -140,31 +196,53 @@ QVector<std::shared_ptr<Character>> CharacterModel::getItems() const {
     return items_;
 }
 
+QVector<std::shared_ptr<Character>> CharacterModel::getItems(Cyrus::Faction faction) const {
+    return factionMap_.values(faction).toVector();
+}
+
 void CharacterModel::setItem(const QModelIndex &index, std::shared_ptr<Character> character) {
     if (!index.isValid() || index.row() < 0 || index.row() >= items_.size()) return;
-    items_[index.row()] = std::move(character); // replace smart pointer
+
+    auto old = items_[index.row()];
+
+    // Remove old from maps
+    factionMap_.remove(old->faction(), old);
+    rowMap_.remove(old);
+
+    // Insert new
+    items_[index.row()] = character;
+    factionMap_.insert(character->faction(), character);
+    rowMap_[character] = index.row();
+
     emit dataChanged(index, index);
 }
 
-
-void CharacterModel::appendItem(QString name, int initiative, Cyrus::CharacterType characterType){
-    beginInsertRows(QModelIndex(), items_.size(), items_.size());
-    items_.push_back(std::make_shared<Character>(name, initiative, characterType));
-    endInsertRows();
-}
-
 void CharacterModel::appendItem(std::shared_ptr<Character> rhs){
-    beginInsertRows(QModelIndex(), items_.size(), items_.size());
+    int row = items_.size();
+    beginInsertRows(QModelIndex(), row, row);
     items_.push_back(rhs);
+
+    // Add to maps
+    factionMap_.insert(rhs->faction(), rhs);
+    rowMap_[rhs] = row;
+
     endInsertRows();
 }
 
 void CharacterModel::addItems(const QVector<std::shared_ptr<Character>>& characters) {
     if (characters.isEmpty()) return;
-    beginInsertRows(QModelIndex(), items_.size(), items_.size() + characters.size() - 1);
+
+    int startRow = items_.size();
+    int endRow   = startRow + characters.size() - 1;
+
+    beginInsertRows(QModelIndex(), startRow, endRow);
     items_.reserve(items_.size() + characters.size());
-    for (const auto& c : characters) {
+
+    for (int i = 0; i < characters.size(); ++i) {
+        auto c = characters[i];
         items_.push_back(c);
+        factionMap_.insert(c->faction(), c);
+        rowMap_[c] = startRow + i;
     }
     endInsertRows();
 }
@@ -178,9 +256,23 @@ void CharacterModel::removeItem(const QModelIndex& index) {
         return;
 
     beginRemoveRows(QModelIndex(), row, row);
+
+    auto character = items_.at(row);
+
+    // Remove from maps
+    factionMap_.remove(character->faction(), character);
+    rowMap_.remove(character);
+
     items_.removeAt(row);
+
+    // Rebuild rowMap_ from 'row' onward
+    for (int i = row; i < items_.size(); ++i) {
+        rowMap_[items_[i]] = i;
+    }
+
     endRemoveRows();
 }
+
 
 void CharacterModel::clear() {
     beginResetModel();
@@ -188,24 +280,28 @@ void CharacterModel::clear() {
     endResetModel();
 }
 
-void CharacterModel::advanceSegment(int segment) {
-    if(segment_ > segment) advanceRound();
-    segment_ = segment;
-    emit segmentUpdate(segment_);
+void CharacterModel::advanceInitiative(int initiative) {
+    if(initiative_ > initiative){
+        //new round so update all characters as not having acted
+        for(auto character : items_){
+            character->setActed(false);
+        }
+        qDebug() << "Advancing round";
+        advanceRound();
+    }
+    
+    initiative_ = initiative;
 
     if (!items_.isEmpty()) {
-        emit dataChanged(index(0,0), index(items_.size()-1, 0),
-                         { CharacterRole, SegmentRole });
+        emit dataChanged(index(0,0), index(items_.size()-1, 0), { CharacterRole });
     }
 }
 
-void CharacterModel::backtrackSegment(int segment){
-    if(segment_ < segment) backtrackRound();
-    segment_ = segment;
-    emit segmentUpdate(segment_);
+void CharacterModel::backtrackInitiative(int initiative){
+    if(initiative_ < initiative) backtrackRound();
+    initiative_ = initiative;
     if (!items_.isEmpty()) {
-        emit dataChanged(index(0,0), index(items_.size()-1, 0),
-                         { CharacterRole, SegmentRole });
+        emit dataChanged(index(0,0), index(items_.size()-1, 0), { CharacterRole });
     }
 }
 

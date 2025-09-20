@@ -26,6 +26,16 @@ QColor m_textDisabled()  { return QColor(0x8E, 0x85, 0x63); } // #8E8563 — Con
 
 
 
+// --- Faction Colors (fantasy-inspired) ---
+QColor m_factionRed()    { return QColor(0xD9, 0x3A, 0x3A); } // #D93A3A enemy
+QColor m_factionBlue()   { return QColor(0x3A, 0x8D, 0xD9); } // #3A8DD9 friendly
+QColor m_factionGray()   { return QColor(0x86, 0x86, 0x86); } // #868686 neutral
+QColor m_factionOrange() { return QColor(0xE9, 0xB4, 0x2F); } // #E9B42F special/elite
+QColor m_factionYellow() { return QColor(0xF2, 0xC7, 0x52); } // #F2C752 alert/attention
+QColor m_factionGreen()  { return QColor(0x3A, 0xD9, 0x7B); } // #3AD97B allied/supportive
+QColor m_factionPurple() { return QColor(0x9C, 0x6E, 0xD6); } // #9C6ED6 mystical/magic
+
+
 QPalette ColorRepository::standardPalette()
 {
     QPalette pal;
@@ -53,6 +63,11 @@ QColor ColorRepository::windowBackground()
 QColor ColorRepository::baseBackground()
 {
     return m_backgroundSecondary();
+}
+
+QColor ColorRepository::highlight()
+{
+    return m_blueHover();
 }
 
 QColor ColorRepository::text()
@@ -134,4 +149,17 @@ QColor ColorRepository::buttonBackground()
 
 QColor ColorRepository::progressArcColor(){
     return m_goldHighlight();
+}
+
+QColor ColorRepository::colorForFaction(Cyrus::Faction f) {
+    switch(f) {
+        case Cyrus::Faction::Red:    return m_factionRed();
+        case Cyrus::Faction::Blue:   return m_factionBlue();
+        case Cyrus::Faction::Gray:   return m_factionGray();
+        case Cyrus::Faction::Orange: return m_factionOrange();
+        case Cyrus::Faction::Yellow: return m_factionYellow();
+        case Cyrus::Faction::Green:  return m_factionGreen();
+        case Cyrus::Faction::Purple: return m_factionPurple();
+        default: return m_factionGray(); // fallback
+    }
 }

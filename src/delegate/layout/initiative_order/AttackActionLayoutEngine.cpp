@@ -3,50 +3,62 @@
 #include "PainterUtils.h"
 #include "IconRepository.h"
 #include "StyleRepository.h"
+#include "ColorRepository.h"
+#include <QApplication>
+#include "LayoutUtils.h"
 
 std::shared_ptr<Layout> AttackActionLayoutEngine::calculate(
-                                const QRect& rect,
-                                const std::shared_ptr<Character>& character,
-                                bool isActiveIndex,
-                                bool isExpanded) const {
+    const QRect& rect,
+    const std::shared_ptr<Character>& character,
+    bool isSelectedIndex,
+    bool isExpanded,
+    const Cyrus::CombatSequenceState state
+) const 
+{
     AttackActionLayout layout;
     auto spec = character->layoutSpec();
+    int padding = spec.padding;
 
-    int x = rect.x();
-    int y = rect.y();
-    int h = rect.height();
+    // --- base + main row ---
+    layout.baseRect     = LayoutUtils::padRectangle(rect, padding); //unpadded, used to build the top and bottom row rects
+    layout.mainRowRect  = LayoutUtils::buildMainRowRect(rect, false, padding);
 
-    // hero icon (square)
-    int heroW = static_cast<int>(h * spec.heroIconScale);
-    layout.heroIconRect = QRect(x, y, heroW, h);
-    x += heroW + spec.padding;
+    // --- left-hand controls (hero + initiative) ---
+    LayoutUtils::LeftAnchorBuilder left(layout.mainRowRect);
+    layout.heroIconRect   = left.icon(spec.heroIconScale, padding);
+    layout.initiativeRect = left.text(spec.initiativeWidth, padding);
 
-    // initiative (fixed width, scaled from font metrics or spec)
-    int initW = spec.initiativeWidth;
-    layout.initiativeRect = QRect(x, y, initW, h);
-    x += initW + spec.padding;
+    // --- right-hand controls (delete button only for now) ---
+    LayoutUtils::RightAnchorBuilder right(layout.mainRowRect);
+    layout.deleteButtonRect = right.icon(spec.deleteButtonScale, padding);
 
-    // delete button (square)
-    int delW = static_cast<int>(h * spec.deleteButtonScale);
-    int delX = rect.right() - delW;
-    layout.deleteButtonRect = QRect(delX, y, delW, h);
+    // --- text (fills remaining space between initiative and delete) ---
+    int textWidth = layout.deleteButtonRect.left() - layout.initiativeRect.right() - padding;
+    layout.textRect = left.text(textWidth, padding);
 
-    // text gets the space in between
-    int textW = delX - x - spec.padding;
-    layout.textRect = QRect(x, y, textW, h);
+    Q_UNUSED(isExpanded)
 
     return std::make_shared<AttackActionLayout>(layout);
 }
+
 
 std::optional<HitCommand> AttackActionLayoutEngine::hitTest(
                         const QModelIndex& index,
                         const std::shared_ptr<Layout>& layout,
                         const std::shared_ptr<Character>& character,
-                        const QPoint& cursorPos) {
+                        const QPoint& cursorPos,
+                        const Cyrus::CombatSequenceState state
+                    ) {
 
     auto cLayout = std::static_pointer_cast<AttackActionLayout>(layout);
 
-    // implement hit tests for attack action layout
+    // Delete button
+    if (cLayout->deleteButtonRect.contains(cursorPos)) {
+        return HitCommand{ [index, this](QListView* /*view*/) {
+            qDebug() << "Delete button clicked.";
+            emit deleteItemClicked(index);
+        }};
+    }
 
     return std::nullopt;
 }
@@ -56,19 +68,59 @@ void AttackActionLayoutEngine::paintLayout(
                     const std::shared_ptr<Layout>& layout,
                     const std::shared_ptr<Character>& character,
                     const CastState castState,
-                    bool isActiveIndex,
+                    bool isSelectedIndex,
                     bool isExpanded,
-                    const QPoint& localCursor) const {
-    // Attack action currently has no extras beyond base painting
-    // You might later add icons for weapon type, advantage/disadvantage, etc.
-    Q_UNUSED(painter)
-    Q_UNUSED(layout)
-    Q_UNUSED(character)
+                    const QPoint& localCursor,
+                    const Cyrus::CombatSequenceState state
+                ) const {
+    auto cLayout = std::static_pointer_cast<AttackActionLayout>(layout);
+    auto spec = character->layoutSpec();
+
+    bool isPressed = QApplication::mouseButtons() & Qt::LeftButton;
+
+    // --- Hero icon ---
+    QIcon heroIcon = character->icon();
+    heroIcon.paint(
+        painter,
+        cLayout->heroIconRect,
+        Qt::AlignCenter,
+        QIcon::Normal,
+        QIcon::On
+    );
+
+    // --- Initiative number ---
+    painter->setFont(StyleRepository::textFont(14, true));
+    painter->setPen(ColorRepository::selectedForeground());
+    painter->drawText(
+        cLayout->initiativeRect,
+        Qt::AlignVCenter | Qt::AlignLeft,
+        QString::number(character->initiative())
+    );
+
+    // --- Attack text (e.g., "Attack 1", or reuse character->text()) ---
+    painter->setFont(StyleRepository::textFont(14, true));
+    painter->setPen(ColorRepository::text());
+    painter->drawText(
+        cLayout->textRect,
+        Qt::AlignVCenter | Qt::AlignLeft,
+        character->text()   // you can swap with attack-specific label if needed
+    );
+
+    // --- Delete button ---
+    PainterUtils::paintIcon(
+        painter,
+        IconRepository::delete_icon(),
+        cLayout->deleteButtonRect,
+        false,
+        cLayout->deleteButtonRect.contains(localCursor),
+        cLayout->deleteButtonRect.contains(localCursor) && isPressed,
+        cLayout->deleteButtonRect.height()
+    );
+
+    // For now, no dropdowns or extra action icons for AttackAction
     Q_UNUSED(castState)
-    Q_UNUSED(isActiveIndex)
+    Q_UNUSED(isSelectedIndex)
     Q_UNUSED(isExpanded)
-    Q_UNUSED(localCursor)
-    return;
 }
 
 int AttackActionLayoutEngine::minimumWidth(const std::shared_ptr<Character>& character) const {
@@ -81,7 +133,7 @@ int AttackActionLayoutEngine::minimumWidth(const std::shared_ptr<Character>& cha
     int delW  = static_cast<int>(h * spec.deleteButtonScale);
 
     // minimum text width: font metrics on "Attack" (or fallback)
-    QFontMetrics fm(StyleRepository::labelFont(12, false));
+    QFontMetrics fm(StyleRepository::textFont(12, false));
     int textW = fm.horizontalAdvance(QStringLiteral("Attack"));
 
     // total width

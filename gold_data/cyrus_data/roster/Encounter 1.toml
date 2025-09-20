@@ -1,0 +1,55 @@
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = '64ec998b-715a-4c93-a0a9-95cd308154c3'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = 'effc5ec4-ece0-401c-9cce-cee407832007'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = 'c3a62f8e-1389-45ac-8ebd-cb3f10491d49'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = '0933d270-1e2b-4050-9688-743c152aeb11'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = 'e5d73fd1-b1a8-4b6b-8ce3-3439835eaa80'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 0
+baseName = 'Goblin'
+class = 0
+faction = 0
+uuid = '7f0b4687-eb79-4e7b-9c60-f5cd59704bb9'
+weaponSpeed = 0
+
+[[characters]]
+attackRate = 1
+baseName = 'Goblin Shaman'
+class = 3
+faction = 0
+uuid = '17d02f7e-a743-414b-9099-9aaad3dd61e9'
+weaponSpeed = 0

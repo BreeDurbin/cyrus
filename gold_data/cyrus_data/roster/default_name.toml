@@ -1,11 +1,15 @@
 [[characters]]
+attackRate = 1
+baseName = 'Mico de Lorraine'
 class = 0
-initiative = 4
-name = 'Mico de Lorraine'
+faction = 1
 uuid = '5db8e3b0-6a9a-4d74-849d-885efbc77bcf'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Regnar'
 class = 0
-initiative = 4
-name = 'Regnar'
+faction = 1
 uuid = '32d5550d-ae7a-4987-a565-fb2eca89b2f4'
+weaponSpeed = 0

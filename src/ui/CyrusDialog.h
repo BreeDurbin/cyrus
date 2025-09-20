@@ -8,6 +8,7 @@
 #include "InitiativeDelegate.h"
 #include "CombatLogDelegate.h"
 #include "InitiativeView.h"
+#include "PillStepper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CyrusDialog; }
@@ -43,14 +44,17 @@ private:
     // UI-only setup helpers
     void setupMainDialog();
     void setupHeroFrame();
+    void setupIconSelector();
     void setupLabels();
     void setupLineEdits();
-    void setupSpinBoxes();
     void setupButtons();
     void setupComboBoxes();
+    void setupCustomWidgets();
     void setupItemViews();
     void setupConnections();
 
     QStringList listFilenames(const std::string& directoryPath);
+    void updateCombatStepperButtons(Cyrus::CombatSequenceState state);
+    void centerOnCurrentInitiative(const QModelIndex& index);
 
 };

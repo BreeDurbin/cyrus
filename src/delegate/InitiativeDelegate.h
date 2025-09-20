@@ -45,19 +45,33 @@ class InitiativeDelegate : public QStyledItemDelegate {
         //Attack Actions
         void decrementAttackAmount(const QModelIndex& index);
         void incrementAttackAmount(const QModelIndex& index);
+        void decrementWeaponSpeed(const QModelIndex& index);
+        void incrementWeaponSpeed(const QModelIndex& index);
         void attackSubmitted(const QModelIndex& index);
 
-        //update model
+        // Misc Actions
+        void miscSubmitted(const QModelIndex& index);
+        void iconSelected(const QModelIndex& index, Cyrus::MiscActionType miscActionType); // icon selector hit
+
+        //character model
         void deleteItem(const QModelIndex& index) const; // delete button clicked
         void iconSelected(const QModelIndex& index, Cyrus::ActionType actionType); // icon selector hit
+        void cancelAction(const QModelIndex& index);
+        void decrementInitiative(const QModelIndex& index);
+        void incrementInitiative(const QModelIndex& index);
 
     protected:
-        bool checkActiveIndex(const QModelIndex& index, const QStyleOptionViewItem& option) const;
+        bool checkSelectedIndex(const QModelIndex& index, const QStyleOptionViewItem& option, 
+                const Cyrus::CombatSequenceState state, const std::shared_ptr<Character>& character) const;
         bool checkExpanded(bool isActiveIndex, std::shared_ptr<Character> character) const;
-        bool checkCurrentSegment(const QModelIndex& index, int currentInitiative) const;
+        bool checkCurrentInitiative(const QModelIndex& index, int currentInitiative) const;
         bool checkHovered(const QStyleOptionViewItem &option) const;
         bool checkIfCharacter(std::shared_ptr<Character> character) const;
         QPoint cursorPosInItem(const QStyleOptionViewItem& option, const QEvent* event = nullptr) const;
+        QColor backgroundForState(const Cyrus::CombatSequenceState state,
+                                 const std::shared_ptr<Character>& character,
+                                 bool isActiveIndex,
+                                 bool isCurrentInitiative) const;
 
     private:
         CharacterController* characterController_;

@@ -1,17 +1,23 @@
 [[characters]]
+attackRate = 1
+baseName = 'Naofumi'
 class = 0
-initiative = 1
-name = 'Naofumi'
+faction = 1
 uuid = '41fe8edc-66e4-4356-b36a-31218ebebd4f'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Raphtalia'
 class = 0
-initiative = 7
-name = 'Raphtalia'
+faction = 1
 uuid = '26450ba3-b1e4-462e-8815-b8b9615ce2cc'
+weaponSpeed = 0
 
 [[characters]]
+attackRate = 1
+baseName = 'Filo-chan'
 class = 0
-initiative = 3
-name = 'Filo-chan'
+faction = 1
 uuid = 'cabdc6a3-397b-4987-a2c6-92c98780e197'
+weaponSpeed = 0

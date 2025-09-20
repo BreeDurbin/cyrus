@@ -2,6 +2,7 @@
 
 add_library(shared STATIC
     Enums.h
+    custom_widgets/
 )
 
 # shared is the Qt hub
@@ -17,4 +18,5 @@ target_include_directories(
     shared
     PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_widgets
 )

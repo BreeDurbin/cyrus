@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/">
+  <file>control/label_border.png</file>
+  <file>control/next_button.png</file>
+  <file>control/prev_button.png</file>
+  <file>control/clear_button.png</file>
+  </qresource>
+</RCC>

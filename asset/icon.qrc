@@ -1,16 +1,31 @@
 <RCC>
   <qresource prefix="/">
+    <file>icon/class/character_icon1.png</file>
     <file>icon/class/character_icon2.png</file>
     <file>icon/class/character_icon3.png</file>
     <file>icon/class/character_icon4.png</file>
     <file>icon/class/character_icon5.png</file>
-    <file>icon/action/attack_icon.png</file>
-    <file>icon/action/cast_icon.png</file>
-    <file>icon/action/hourglass_icon.png</file>
     <file>icon/ui/save_icon.png</file>
     <file>icon/ui/load_icon.png</file>
     <file>icon/ui/submit_icon.png</file>
     <file>icon/ui/clone_icon.png</file>
     <file>icon/ui/delete_icon.png</file>
+    <file>icon/ui/initiative_icon.png</file>
+    <file>icon/ui/right_arrow_light_icon.png</file>
+    <file>icon/ui/left_arrow_light_icon.png</file>
+    <file>icon/ui/right_arrow_dark_icon.png</file>
+    <file>icon/ui/left_arrow_dark_icon.png</file>
+    <file>icon/ui/cancel_icon.png</file>
+    <file>icon/action/attack_icon.png</file>
+    <file>icon/action/cast_icon.png</file>
+    <file>icon/action/misc_icon.png</file>
+    <file>icon/action/hourglass_icon.png</file>
+    <file>icon/action/amulet_icon.png</file>
+    <file>icon/action/potion_icon.png</file>
+    <file>icon/action/ring_icon.png</file>
+    <file>icon/action/rod_icon.png</file>
+    <file>icon/action/magic_scroll_icon.png</file>
+    <file>icon/action/staff_icon.png</file>
+    <file>icon/action/wand_icon.png</file>
   </qresource>
 </RCC>

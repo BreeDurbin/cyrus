@@ -73,6 +73,46 @@ namespace LayoutUtils {
     };
 
 
+    inline QRect buildMainRowRect(const QRect& base, bool isExpanded, int padding) {
+        QRect rowRect;
+
+        if (isExpanded) {
+            // Take the top half of the base rect
+            rowRect = QRect(
+                base.left(),
+                base.top(),
+                base.width(),
+                base.height() / 2
+            );
+        } else {
+            // Use the full height when collapsed
+            rowRect = base;
+        }
+
+        // Apply horizontal and vertical padding
+        rowRect.adjust( 0, padding, -(2 * padding), -padding);
+
+        return rowRect;
+    }
+
+    inline QRect buildDropdownRect(const QRect& base, const QRect& mainRow, int padding) {
+        // Remaining space below mainRow
+        if (mainRow.bottom() >= base.bottom()) return QRect(); // no space for dropdown
+
+        QRect dropdown(
+            base.left(),
+            mainRow.bottom(),
+            base.width(),
+            base.bottom() - mainRow.bottom()
+        );
+
+        // Apply horizontal and vertical padding
+        dropdown.adjust(2 * padding, padding, -(2 * padding), -padding);
+
+        return dropdown;
+    }
+
+
 } // namespace LayoutUtils
 
 

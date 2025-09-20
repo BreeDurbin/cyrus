@@ -5,6 +5,7 @@
 #include "Character.h"
 #include "AttackAction.h"
 #include "CastAction.h"
+#include "MiscAction.h"
 #include "RosterLayoutEngine.h"
 
 class LayoutFactory {
@@ -26,3 +27,6 @@ LayoutEngine* LayoutFactory::forCharacterType<CastAction>();
 
 template <>
 LayoutEngine* LayoutFactory::forCharacterType<AttackAction>();
+
+template <>
+LayoutEngine* LayoutFactory::forCharacterType<MiscAction>();

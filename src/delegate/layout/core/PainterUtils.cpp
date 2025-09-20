@@ -1,6 +1,7 @@
 #include "PainterUtils.h"
 #include "ColorRepository.h"
 #include "StyleRepository.h"
+#include <QIcon>
 
 namespace PainterUtils {
 

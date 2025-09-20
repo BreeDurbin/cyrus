@@ -3,6 +3,7 @@
 
 struct AttackRate {
     int halfAttacks_; // number of half attacks (e.g. 3 = 1.5 attacks/round)
+    bool isAttacked_ = false;
 
     AttackRate(int halfAttacks = 2) : halfAttacks_(halfAttacks) {}
 
@@ -15,6 +16,20 @@ struct AttackRate {
             // half attack
             return QString("%1/2").arg(halfAttacks_);
         }
+    }
+
+    // not a stateless function keeps track of each time an attack happens 
+    // so it can account for non whole number attacks / round,  ex: 5/2 attacks a round
+    int attack(){
+        // whole number attack amount
+        if(halfAttacks_ % 2 == 0) return halfAttacks_ / 2; 
+        // extra attack from having an extra half attack;
+        if(isAttacked_){
+            isAttacked_ = false;
+            return (halfAttacks_ / 2) + 1; 
+        }
+        isAttacked_ = true;
+        return halfAttacks_ / 2;
     }
 
     // Add attacks (1.0, 0.5, etc.) with clamping

@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QPalette>
+#include "Enums.h"
 
 
 namespace ColorRepository
@@ -10,6 +11,7 @@ namespace ColorRepository
 
     QColor windowBackground();
     QColor baseBackground();
+    QColor highlight();
     QColor text();
     QColor placeholderText();
 
@@ -30,4 +32,5 @@ namespace ColorRepository
 
     QColor progressArcColor();
 
+    QColor colorForFaction(Cyrus::Faction f);
 }

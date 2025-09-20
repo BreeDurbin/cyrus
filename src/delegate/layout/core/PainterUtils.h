@@ -1,12 +1,9 @@
 #pragma once
 
 #include <QPainter>
-#include "Character.h"
 #include <unordered_map>
 #include <QUuid>
-#include "CastState.h"
-#include "Stepper.h"
-#include "CharacterLayoutEngine.h"
+
 
 
 namespace PainterUtils {

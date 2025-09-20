@@ -6,6 +6,8 @@ add_library(model STATIC
     data/Character.h
     data/CastAction.cpp
     data/CastAction.h
+    data/MiscAction.cpp
+    data/MiscAction.h
     CharacterModel.cpp
     CharacterModel.h
 )

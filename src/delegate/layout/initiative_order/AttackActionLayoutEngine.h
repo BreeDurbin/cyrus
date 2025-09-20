@@ -8,7 +8,6 @@
 
 
 struct AttackActionLayout : Layout {
-    QRect baseRect;
     QRect heroIconRect;
     QRect initiativeRect;
     QRect textRect;
@@ -17,28 +16,38 @@ struct AttackActionLayout : Layout {
 
 struct AttackActionLayoutEngine : LayoutEngine {
             Q_OBJECT
+            
     std::shared_ptr<Layout> calculate(
         const QRect& rect,
         const std::shared_ptr<Character>& character,
-        bool isActiveIndex,
-        bool isExpanded) const override;
+        bool isSelectedIndex,
+        bool isExpanded,
+        const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+    ) const override;
 
     std::optional<HitCommand> hitTest(
         const QModelIndex& index,
         const std::shared_ptr<Layout>& layout,
         const std::shared_ptr<Character>& character,
-        const QPoint& cursorPos) override;
+        const QPoint& cursorPos,
+        const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+    ) override;
 
     void paintLayout(
         QPainter* painter,
         const std::shared_ptr<Layout>& layout,
         const std::shared_ptr<Character>& character,
         const CastState castState,
-        bool isActiveIndex,
+        bool isSelectedIndex,
         bool isExpanded,
-        const QPoint& localCursor ) const override;
+        const QPoint& localCursor,
+        const Cyrus::CombatSequenceState state = Cyrus::CombatSequenceState::NPC_DETERMINATION
+     ) const override;
 
     int minimumWidth(
         const std::shared_ptr<Character>& character) const override;
+
+    signals:
+        void deleteItemClicked(const QModelIndex& index) const;
                                 
 };
