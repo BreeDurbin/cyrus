@@ -9,6 +9,8 @@
 
 Cyrus is a feature rich initiative and combat tracker for AD&D 2nd edition. It supports the AD&D 2nd edition combat sequence including all phases and extra optional rules such as indidual initiative, weapon speed to attacks, group initiative and initiative modifiers for misc. actions. 
 
+There is no modeling of individual effects or dice rolls. How Cyrus helps is by tracking who is doing what, what has been done and when they resolve in the actual resolution step.
+
 ## How to use Cyrus for your sessions:
 
 
@@ -32,8 +34,6 @@ To support haste and other buffs which modify attack speed simply change the att
 To remove characters from the roster or the initiative order click the skull icon to delete them.
 
 To clear the combat log or initiative order click the 'X' button at the top right of those components.
-
-There is no modeling of individual effects or dice rolls. How Cyrus helps is by tracking who is doing what, what has been done and when they resolve in the actual resolution step.
 
 ## Preview:
 ![preview](./docs/screenshots/CYRUS_PREVIEW_3.png)
