@@ -13,6 +13,11 @@ struct RosterLayout : Layout {
     QRect deleteButtonRect;
 };
 
+struct SentinelLayout : Layout {
+    QRect lineEditFrame;
+    QRect buttonFrame;
+};
+
 struct RosterLayoutEngine : LayoutEngine {
         Q_OBJECT
     public: 
@@ -46,6 +51,8 @@ struct RosterLayoutEngine : LayoutEngine {
 
     int minimumWidth(
         const std::shared_ptr<Character>& character) const override;
+
+    EditorHandle createEditorHandle(QWidget* parents);
 
     signals:
         void deleteButtonClicked(const QModelIndex& index);

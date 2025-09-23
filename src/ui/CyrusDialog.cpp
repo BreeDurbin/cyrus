@@ -1,9 +1,7 @@
 #include "CyrusDialog.h"
 #include "ui_CyrusDialog.h"
 
-
 #include "StyleRepository.h"
-#include <iostream>
 #include <QStringList>
 #include <QGroupBox>
 #include <QTextEdit>
@@ -17,7 +15,8 @@
 #include "CombatLogLayoutEngine.h"
 #include "CastAction.h"
 #include <filesystem>
-
+#include "RosterModel.h"
+#include "CharacterModel.h"
 #include "CyrusButton.h"
 #include <QMessageBox>
 #include <QScrollBar>
@@ -40,7 +39,7 @@ CyrusDialog::CyrusDialog(QWidget *parent)
         //Models are parented by CyrusDialog so it will handle cleanup
         new CharacterModel(this),
         new CharacterModel(this),
-        new CharacterModel(this),
+        new RosterModel(this),
         this
     );
 
@@ -53,15 +52,13 @@ CyrusDialog::CyrusDialog(QWidget *parent)
     characterSelection_ = ui->roster->selectionModel();
     combatLogSelection_ = ui->combatLog->selectionModel();
     
-    rosterDelegate_ = new RosterDelegate(characterController_, this);
-    initiativeDelegate_ = new InitiativeDelegate(characterController_, this);
+    rosterDelegate_ = new RosterDelegate(characterController_, ui->roster, this);
+    initiativeDelegate_ = new InitiativeDelegate(characterController_, ui->initiativeOrder, this);
     combatLogDelegate_ = new CombatLogDelegate(this);
 
     //Configure styling
     setupHeroFrame();
-    setupIconSelector();
     setupLabels();
-    setupLineEdits();
     setupButtons();
     setupComboBoxes();
     setupCustomWidgets();
@@ -140,21 +137,11 @@ void CyrusDialog::setupHeroFrame() {
     ui->heroFrame->setStyleSheet(StyleRepository::hero());
 }
 
-void CyrusDialog::setupIconSelector() {
-    ui->iconSelector->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::MinimumExpanding);
-    ui->iconSelector->setMinimumWidth(ui->iconSelector->sizeHint().width());
-    qDebug() << "IconSelector sizeHint:" << ui->iconSelector->sizeHint().width();
-}
-
 void CyrusDialog::setupLabels() {
     ui->participantsLabel->setStyleSheet(StyleRepository::label());
     ui->initiativeOrderLabel->setStyleSheet(StyleRepository::label());
     ui->combatLogLabel->setStyleSheet(StyleRepository::label());
     ui->roundCounterLabel->setStyleSheet(StyleRepository::label());
-}
-
-void CyrusDialog::setupLineEdits(){
-    ui->characterNameLineEdit->setStyleSheet(StyleRepository::lineEdit());
 }
 
 void CyrusDialog::setupButtons() {
@@ -178,7 +165,7 @@ void CyrusDialog::setupButtons() {
 
     // Next / Prev buttons
     {
-        int height = 1.15 * ui->nextButton->parentWidget()->height();
+        int height = 1.3 * ui->nextButton->parentWidget()->height();
 
         QAction* nextAction = new QAction(this);
         nextAction->setShortcut(QKeySequence(Qt::Key_Right));
@@ -208,29 +195,16 @@ void CyrusDialog::setupButtons() {
         ui->saveButton->setFixedSize(height, height);
         ui->saveButton->setIconSize(QSize(height, height));
         ui->saveButton->setStyleSheet(StyleRepository::iconPushButton());
-
-        QIcon loadIcon = IconRepository::load_icon();
-        ui->loadButton->setIcon(loadIcon);
-        ui->loadButton->setFixedSize(height, height);
-        ui->loadButton->setIconSize(QSize(height, height));
-        ui->loadButton->setStyleSheet(StyleRepository::iconPushButton());
     }
 
 }
 
 void CyrusDialog::setupComboBoxes() {
-    // Apply style
-    ui->rosterGroupsComboBox->setStyleSheet(StyleRepository::comboBox());
-    ui->rosterGroupsComboBox->clear();
-    ui->rosterGroupsComboBox->setEditable(true);
 
     // Populate from helper
     const QStringList rosterFiles = listFilenames("cyrus_data/roster");
     ui->rosterGroupsComboBox->addItems(rosterFiles);
-
-    if (!rosterFiles.isEmpty()) {
-        ui->rosterGroupsComboBox->setCurrentIndex(0);
-    }
+    
 }
 
 void CyrusDialog::setupCustomWidgets(){
@@ -297,14 +271,10 @@ void CyrusDialog::setupConnections(){
             characterController_, &CharacterController::setGroupInitiative);
 
     //setup addCharacterButton to add character to the roster
-    connect(ui->addCharacterButton, &QPushButton::clicked,
-        this, [this]() {
-            QString text = ui->characterNameLineEdit->text();
-            ui->characterNameLineEdit->clear();
-            if (text.isEmpty()) return;
-            int classId = ui->iconSelector->currentIndex();
-            Cyrus::CharacterType type = static_cast<Cyrus::CharacterType>(classId);
-            QModelIndex bottomIndex = characterController_->addToRoster(text, type);
+    connect(rosterDelegate_, &RosterDelegate::characterCreated,
+        this, [this](const QString &name) {
+            if (name.isEmpty()) return;
+            QModelIndex bottomIndex = characterController_->addToRoster(name);
             characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
         }
     );
@@ -320,45 +290,12 @@ void CyrusDialog::setupConnections(){
         }
 
         characterController_->saveRoster(rosterName.toStdString());
+        ui->rosterGroupsComboBox->addItem(rosterName);
     });
 
-    // load button
-    connect(ui->loadButton, &QPushButton::clicked, this, [this]() {
-        const QString selectedRoster = ui->rosterGroupsComboBox->currentText();
-        if (selectedRoster.isEmpty()) {
-            qWarning() << "No roster selected to load.";
-            return;
-        }
-
-        if (characterController_->isRosterModified()) {
-            QMessageBox::StandardButton reply;
-            reply = QMessageBox::question(
-                this,
-                "Unsaved Changes",
-                "You have unsaved changes in your roster. Do you want to save before loading another roster?",
-                QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel
-            );
-
-            if (reply == QMessageBox::Cancel) {
-                return; // abort load
-            } else if (reply == QMessageBox::Yes) {
-                const auto current = characterController_->currentRosterName();
-                if (!current.empty()) {
-                    characterController_->saveRoster(current);
-                } else {
-                    // if no roster was loaded yet, fallback to combo box name
-                    characterController_->saveRoster(selectedRoster.toStdString());
-                }
-            }
-        }
-
-        // Now safe to load the new roster
-        QModelIndex bottomIndex = characterController_->loadRoster(selectedRoster.toStdString());
-        if (bottomIndex.isValid() && characterSelection_) {
-            characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
-        }
-    });
-
+    // load on combo box item change
+    connect(ui->rosterGroupsComboBox, QOverload<const QString&>::of(&CyrusComboBox::currentIndexChanged),
+        this, &CyrusDialog::onRosterSelectionChanged);
 
 
     // Connect combo box editing finished (when user presses Enter)
@@ -396,6 +333,7 @@ void CyrusDialog::setupConnections(){
 
     connect(characterController_, &CharacterController::combatSequenceStateChanged,
         ui->combatSequenceStateStepper, &PillStepper::updateCombatSequenceState);
+    
 
     // only show next/prev buttons on resolution step
     connect(characterController_, &CharacterController::combatSequenceStateChanged,
@@ -548,4 +486,37 @@ void CyrusDialog::centerOnCurrentInitiative(const QModelIndex& index) {
     if (index.isValid()) {
         ui->initiativeOrder->scrollTo(index, QAbstractItemView::PositionAtCenter);
     }
+}
+
+void CyrusDialog::onRosterSelectionChanged(const QString& selectedRoster) {
+    if (selectedRoster.isEmpty()) {
+        qWarning() << "No roster selected to load.";
+        return;
+    }
+
+    // Check if current roster has unsaved changes
+    if (characterController_->isRosterModified()) {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this,
+            "Unsaved Changes",
+            "You have unsaved changes in your roster. Do you want to save before loading another roster?",
+            QMessageBox::Yes | QMessageBox::No
+        );
+
+        if (reply == QMessageBox::Yes) {
+            const auto current = characterController_->currentRosterName();
+            if (!current.empty()) {
+                characterController_->saveRoster(current);
+            } else {
+                characterController_->saveRoster(selectedRoster.toStdString());
+            }
+        }
+    }
+
+    // Now safe to load the new roster
+    QModelIndex bottomIndex = characterController_->loadRoster(selectedRoster.toStdString());
+    if (bottomIndex.isValid() && characterSelection_) {
+        characterSelection_->setCurrentIndex(bottomIndex, QItemSelectionModel::ClearAndSelect);
+    }
+
 }

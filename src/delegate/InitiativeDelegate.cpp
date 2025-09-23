@@ -23,98 +23,12 @@
 #include "CastActionLayoutEngine.h"
 #include "MiscActionLayoutEngine.h"
 #include "MiscAction.h"
+#include <QPointer>
 
 #include<iostream>
-
-InitiativeDelegate::InitiativeDelegate(CharacterController* characterController, QObject *parent) 
-    : QStyledItemDelegate(parent), characterController_{characterController} {
-
-    // character layout engine
-    auto* characterLayoutEngine = static_cast<CharacterLayoutEngine*>(LayoutFactory::forCharacterType<Character>());
-
-    // main row
-    connect(characterLayoutEngine, &CharacterLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItem);
-
-    connect(characterLayoutEngine, QOverload<const QModelIndex&, Cyrus::ActionType>::of(&CharacterLayoutEngine::iconSelectorClicked),
-            this,                  QOverload<const QModelIndex&, Cyrus::ActionType>::of(&InitiativeDelegate::iconSelected));
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::cancelActionClicked,
-        this, &InitiativeDelegate::cancelAction);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementInitiativeClicked,
-            this, &InitiativeDelegate::decrementInitiative);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementInitiativeClicked,
-            this, &InitiativeDelegate::incrementInitiative);
-
-    //Cast action dropdown
-    connect(characterLayoutEngine, &CharacterLayoutEngine::spellNameEdited,
-            this, &InitiativeDelegate::spellNameEdited);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementCastingTimeClicked,
-            this, &InitiativeDelegate::decrementCastingTime);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementCastingTimeClicked,
-            this, &InitiativeDelegate::incrementCastingTime);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementDurationClicked,
-            this, &InitiativeDelegate::decrementDuration);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementDurationClicked,
-            this, &InitiativeDelegate::incrementDuration);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::castSubmitClicked,
-            this, &InitiativeDelegate::castSubmitted);
-
-    // Attack action dropdown
-    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementAttackAmountClicked,
-            this, &InitiativeDelegate::decrementAttackAmount);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementAttackAmountClicked,
-            this, &InitiativeDelegate::incrementAttackAmount);
-    
-    connect(characterLayoutEngine, &CharacterLayoutEngine::decrementWeaponSpeedClicked,
-            this, &InitiativeDelegate::decrementWeaponSpeed);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::incrementWeaponSpeedClicked,
-            this, &InitiativeDelegate::incrementWeaponSpeed);
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::attackSubmitClicked,
-            this, &InitiativeDelegate::attackSubmitted);
-
-    // Misc action dropdown
-
-    connect(characterLayoutEngine, QOverload<const QModelIndex&, Cyrus::MiscActionType>::of(&CharacterLayoutEngine::iconSelectorClicked),
-            this,                  QOverload<const QModelIndex&, Cyrus::MiscActionType>::of(&InitiativeDelegate::iconSelected));
-
-    connect(characterLayoutEngine, &CharacterLayoutEngine::miscSubmitClicked,
-            this, &InitiativeDelegate::miscSubmitted);
-
-    //attack action layout engine
-    auto* attackActionLayoutEngine = static_cast<AttackActionLayoutEngine*>(LayoutFactory::forCharacterType<AttackAction>());
-
-    connect(attackActionLayoutEngine, &AttackActionLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItem);
-
-    // cast action layout engine
-
-    auto* castActionLayoutEngine = static_cast<CastActionLayoutEngine*>(LayoutFactory::forCharacterType<CastAction>());
-
-    connect(castActionLayoutEngine, &CastActionLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItem);
-
-    // misc action layout engine
-
-    auto* miscActionLayoutEngine = static_cast<MiscActionLayoutEngine*>(LayoutFactory::forCharacterType<MiscAction>());
-
-    connect(miscActionLayoutEngine, &MiscActionLayoutEngine::deleteItemClicked,
-            this, &InitiativeDelegate::deleteItem);
-}
-
-
 #include <QDebug>
 #include <typeinfo>
+
 
 void InitiativeDelegate::paint(QPainter* painter,
                                const QStyleOptionViewItem& option,
@@ -189,9 +103,6 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
     }
 
     if (event->type() == QEvent::MouseButtonRelease) {
-
-        auto* view = qobject_cast<QListView*>(const_cast<QWidget*>(option.widget)); 
-
         const QVariant charVar = index.data(Cyrus::CharacterRole);
         if (!charVar.canConvert<std::shared_ptr<Character>>()) { return false; }
         auto character = charVar.value<std::shared_ptr<Character>>();
@@ -209,7 +120,7 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         auto layout = engine->calculate(option.rect, character, isSelectedIndex, isExpanded, state);
         auto callback = engine->hitTest(index, layout, character, localCursor, state);
         if(callback){
-            callback->execute(view);
+            callback->execute(this);
             if (option.widget) const_cast<QWidget*>(option.widget)->update(option.rect);
             return true;
         }
@@ -218,7 +129,7 @@ bool InitiativeDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
     return false;
 }
 
-QWidget* InitiativeDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
+QWidget* InitiativeDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const{
     qDebug() << "createEditor";
     
     if (index.data(Cyrus::ModelRoles::RoleTypeRole).toInt() != Cyrus::SpellNameEditRole)
@@ -229,8 +140,18 @@ QWidget* InitiativeDelegate::createEditor(QWidget* parent, const QStyleOptionVie
     editor->setStyleSheet(StyleRepository::lineEdit());
     editor->setAutoFillBackground(true); // Make the lineedit paint its own background
 
+    if (editor) {
+        editors_[index] = editor;
+
+        // Clean up when destroyed
+        connect(editor, &QWidget::destroyed, [this, index]() {
+            qDebug() << "Removing editor at index " << index.row();
+            editors_.remove(index);
+        });
+    }
+
     // --- Update spell name on each keystroke ---
-    connect(editor, &QLineEdit::textChanged, this, [this, editor, index](const QString& text) {
+    connect(editor, &QLineEdit::textChanged, this, [this, editor, index](const QString& text) mutable {
         auto charVar = index.data(Cyrus::CharacterRole);
         if (!charVar.canConvert<std::shared_ptr<Character>>()) return;
         auto character = charVar.value<std::shared_ptr<Character>>();
@@ -238,16 +159,20 @@ QWidget* InitiativeDelegate::createEditor(QWidget* parent, const QStyleOptionVie
         emit spellNameEdited(character->uuid(), text);
     });
 
+    auto *self = const_cast<InitiativeDelegate*>(this);
+
     // Commit on Enter
-    connect(editor, &QLineEdit::returnPressed, this, [this, editor]() {
-        emit commitData(editor);
-        emit closeEditor(editor);
+    connect(editor, &QLineEdit::returnPressed, self, [self, editor]() {
+        qDebug() << "returnPressed, closing";
+        emit self->commitData(editor);
+        emit self->closeEditor(editor);
     });
 
     // Commit on focus loss
-    connect(editor, &QLineEdit::editingFinished, this, [this, editor]() {
-        emit commitData(editor);
-        emit closeEditor(editor);
+    connect(editor, &QLineEdit::editingFinished, self, [self, editor]() {
+        qDebug() << "editingFinished, closing";
+        emit self->commitData(editor);
+        emit self->closeEditor(editor);
     });
 
     return editor;
@@ -276,12 +201,9 @@ void InitiativeDelegate::setModelData(QWidget* editor, QAbstractItemModel*, cons
     auto charVar = index.data(Cyrus::CharacterRole);
     if (!charVar.canConvert<std::shared_ptr<Character>>()) return;
     auto character = charVar.value<std::shared_ptr<Character>>();
-
-    //get new name
-    QString newName = lineEdit->text();
-
+    
     //notify character controller to update cast state
-    emit spellNameEdited(character->uuid(), newName);
+    emit spellNameEdited(character->uuid(), lineEdit->text());
 }
 
 void InitiativeDelegate::updateEditorGeometry(QWidget* editor,
@@ -414,7 +336,6 @@ QColor InitiativeDelegate::backgroundForState(const Cyrus::CombatSequenceState s
     switch (state) {
         case Cyrus::CombatSequenceState::NPC_DETERMINATION: {
             if (character->faction() != Cyrus::Faction::Blue) {
-                qDebug() << "NPC for npc determination";
                 // gray out the background if thheir action is already submitted
                 return character->hasActed() ? ColorRepository::segmentBackground() : ColorRepository::selectedBackground();
             }
@@ -423,7 +344,6 @@ QColor InitiativeDelegate::backgroundForState(const Cyrus::CombatSequenceState s
 
         case Cyrus::CombatSequenceState::PLAYER_DETERMINATION: {
             if (character->faction() == Cyrus::Faction::Blue) {
-                qDebug() << "PC for PC determination";
                 // gray out the background if thheir action is already submitted
                 return character->hasActed() ? ColorRepository::segmentBackground() : ColorRepository::selectedBackground();
             }
@@ -431,12 +351,10 @@ QColor InitiativeDelegate::backgroundForState(const Cyrus::CombatSequenceState s
         }
 
         case Cyrus::CombatSequenceState::INITIATIVE: {
-            qDebug() << "Initiative state";
             return ColorRepository::selectedBackground();
         }
 
         case Cyrus::CombatSequenceState::RESOLUTION: {
-            qDebug() << "Resolution state";
             if (isActiveIndex) return ColorRepository::selectedBackground();
             if (isCurrentInitiative) return ColorRepository::segmentBackground();
             return ColorRepository::baseBackground();
@@ -447,3 +365,18 @@ QColor InitiativeDelegate::backgroundForState(const Cyrus::CombatSequenceState s
     return Qt::transparent;
 }
 
+// Keep track of editors for each index
+QWidget* InitiativeDelegate::editorForIndex(const QModelIndex& index) const {
+    auto it = editors_.find(index);
+    if (it != editors_.end()) return it.value().data();
+    return nullptr;
+}
+
+QModelIndex InitiativeDelegate::indexForEditor(QWidget* editor) const {
+    for (auto it = editors_.cbegin(); it != editors_.cend(); ++it) {
+        if (it.value().data() == editor) {
+            return it.key();
+        }
+    }
+    return {};
+}

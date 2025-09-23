@@ -8,7 +8,12 @@
 #include "ColorRepository.h"
 #include "StyleRepository.h"
 #include "PainterUtils.h"
-
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLineEdit>
+#include "RosterDelegate.h"
+#include "SentinelEditor.h"
+#include "RosterView.h"
 
 std::shared_ptr<Layout> RosterLayoutEngine::calculate(
     const QRect& rect,
@@ -20,12 +25,43 @@ std::shared_ptr<Layout> RosterLayoutEngine::calculate(
     auto spec = character->layoutSpec();
     int padding = spec.padding;
 
-    auto layout = std::make_shared<RosterLayout>();
-    layout->baseRect = LayoutUtils::padRectangle(rect, spec.padding);
-    int rowHeight = layout->baseRect.height();
+    if (character->isSentinel()) {
+        auto layout = std::make_shared<SentinelLayout>();
 
-    LayoutUtils::LeftAnchorBuilder left(layout->baseRect);
-    LayoutUtils::RightAnchorBuilder right(layout->baseRect);
+        // Base rect (with padding)
+        layout->baseRect = LayoutUtils::padRectangle(rect, padding);
+        layout->mainRowRect = LayoutUtils::buildMainRowRect(layout->baseRect, padding);
+        int rowHeight = layout->mainRowRect.height();
+
+        // Anchors
+        LayoutUtils::LeftAnchorBuilder left(layout->mainRowRect);
+        LayoutUtils::RightAnchorBuilder right(layout->mainRowRect);
+
+        // --- Button (right anchored) ---
+        // keep it proportional to row height
+        int buttonSize = static_cast<int>(rowHeight * 0.65);
+        if (buttonSize < 8) buttonSize = 8;
+        layout->buttonFrame = right.control(buttonSize, buttonSize, padding);
+
+        // --- Line edit (left anchored) ---
+        // available width is the gap between the left cursor and the right cursor
+        int availableWidth = right.cursorX - left.cursorX;
+        if (availableWidth < 0) availableWidth = 0;
+
+        int lineEditHeight = buttonSize; // match the vertical size of the button
+        layout->lineEditFrame = left.control(availableWidth, lineEditHeight, padding);
+
+        return layout;
+    }
+
+
+    auto layout = std::make_shared<RosterLayout>();
+    layout->baseRect = LayoutUtils::padRectangle(rect, padding);
+    layout->mainRowRect = LayoutUtils::buildHeroMainRowRect(rect, false, padding);
+    int rowHeight = layout->mainRowRect.height();
+
+    LayoutUtils::LeftAnchorBuilder left(layout->mainRowRect);
+    LayoutUtils::RightAnchorBuilder right(layout->mainRowRect);
 
     // Hero Icon
     layout->heroIconRect     = left.icon(spec.heroIconScale, padding);
@@ -60,27 +96,51 @@ std::optional<HitCommand> RosterLayoutEngine::hitTest(
     const QPoint& cursorPos,
     const Cyrus::CombatSequenceState state) {
         
-    auto rosterLayout = std::dynamic_pointer_cast<RosterLayout>(layout);
-    if (!rosterLayout) {
-        return std::nullopt;
+    if(auto sentinelLayout = std::dynamic_pointer_cast<SentinelLayout>(layout)){
+        if(sentinelLayout->lineEditFrame.contains(cursorPos)){
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                if(auto d = dynamic_cast<RosterDelegate*>(delegate)){
+                    if (auto* rosterView = qobject_cast<RosterView*>(d->view())){;
+                        qDebug() << "Editing row: " << index.row();
+                        rosterView->editCustom(index);
+                    }
+                } else {
+                    qDebug() << "cast failed to rosterDelegate for row: " + index.row();
+                }
+            }};
+        }
     }
 
-    // --- Delete button ---
-    if (rosterLayout->deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this](QListView* /*view*/) { emit deleteButtonClicked(index); } };
-    }
+    if(auto rosterLayout = std::dynamic_pointer_cast<RosterLayout>(layout)){
+        // --- Delete button ---
+        if (rosterLayout->deleteButtonRect.contains(cursorPos)) {
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<RosterDelegate*>(delegate);
+                emit d->deleteRosterMember(index); 
+            } };
+        }
 
-    // --- Clone button ---
-    if (rosterLayout->cloneButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this](QListView* /*view*/) { emit cloneRosterMemberClicked(index); } };
-    }
+        // --- Clone button ---
+        if (rosterLayout->cloneButtonRect.contains(cursorPos)) {
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<RosterDelegate*>(delegate);
+                emit d->cloneRosterMember(index); 
+            } };
+        }
 
-    // --- Faction stepper  ---
-    if (rosterLayout->factionStepperRects.rightRect.contains(cursorPos)) { 
-        return HitCommand{ [index, this](QListView* /*view*/) { emit nextFactionClicked(index); } };
-    }
-    if (rosterLayout->factionStepperRects.leftRect.contains(cursorPos)) { 
-        return HitCommand{ [index, this](QListView* /*view*/) { emit previousFactionClicked(index); } };
+        // --- Faction stepper  ---
+        if (rosterLayout->factionStepperRects.rightRect.contains(cursorPos)) { 
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<RosterDelegate*>(delegate);
+                emit d->nextFaction(index); 
+            } };
+        }
+        if (rosterLayout->factionStepperRects.leftRect.contains(cursorPos)) { 
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<RosterDelegate*>(delegate);
+                emit d->previousFaction(index); 
+            } };
+        }
     }
 
     return std::nullopt;
@@ -97,6 +157,33 @@ void RosterLayoutEngine::paintLayout(
     const QPoint& cursorPos,
     const Cyrus::CombatSequenceState state
 ) const {
+
+    if (auto sentinelLayout = std::dynamic_pointer_cast<SentinelLayout>(layout)) {
+        painter->save();
+
+        // --- Paint lineEdit ---
+        PainterUtils::paintStyledLineEdit(
+            painter,
+            sentinelLayout->lineEditFrame,
+            "",
+            "Add a character...",           
+            sentinelLayout->lineEditFrame.contains(cursorPos),
+            false
+        );
+
+        // --- Button icon ---
+        QPixmap plusIcon = IconRepository::plus_icon()
+                            .pixmap(sentinelLayout->buttonFrame.size());
+
+        // Draw stretched to fill the button frame
+        painter->drawPixmap(sentinelLayout->buttonFrame, plusIcon);
+
+        painter->restore();
+        return;
+    }
+
+    // default character case for painting:
+
     auto rosterLayout = std::dynamic_pointer_cast<RosterLayout>(layout);
     if (!rosterLayout) {
         return;
@@ -189,3 +276,33 @@ int RosterLayoutEngine::minimumWidth(
 
     return minWidth;
 }
+
+
+EditorHandle RosterLayoutEngine::createEditorHandle(QWidget* parent)
+{
+    auto* editor = new SentinelEditor(parent);
+
+    EditorCommand cmd;
+    cmd.execute = [this, editor](QAbstractItemDelegate* delegate) {
+        QObject::connect(editor->addButton(), &QPushButton::clicked,
+                         editor, [this, editor, delegate]() {
+            QString name = editor->lineEdit()->text().trimmed();
+            if (!name.isEmpty()) {
+                if (auto rosterDelegate = dynamic_cast<RosterDelegate*>(delegate)) {
+                    emit rosterDelegate->characterCreated(name);
+                    editor->lineEdit()->clear();
+
+                    emit delegate->commitData(editor);
+                    emit delegate->closeEditor(editor);
+                }
+            }
+        });
+    };
+
+    return EditorHandle{
+        .widget = editor,
+        .command = cmd
+    };
+}
+
+

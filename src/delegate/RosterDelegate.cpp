@@ -17,21 +17,16 @@
 #include "LayoutUtils.h"
 #include "LayoutFactory.h"
 #include "RosterLayoutEngine.h"
+#include <QHBoxLayout>
+#include <QPushButton>
+#include "SentinelEditor.h"
 
 #include<iostream>
 
-RosterDelegate::RosterDelegate(CharacterController* characterController, QObject *parent) 
-    : QStyledItemDelegate(parent), characterController_{characterController} {
-        auto* engine = LayoutFactory::rosterLayoutEngine();
-        connect(engine, &RosterLayoutEngine::nextFactionClicked,
-                this,   &RosterDelegate::nextFaction);
-        connect(engine, &RosterLayoutEngine::previousFactionClicked,
-                this,   &RosterDelegate::previousFaction);
-        connect(engine, &RosterLayoutEngine::cloneRosterMemberClicked,
-                this,   &RosterDelegate::cloneRosterMember);
-        connect(engine, &RosterLayoutEngine::deleteButtonClicked,
-                this,   &RosterDelegate::deleteRosterMember);
-}
+RosterDelegate::RosterDelegate(CharacterController* characterController, QAbstractItemView* view, QObject *parent) 
+    : QStyledItemDelegate(parent), 
+    characterController_{characterController},
+    view_{view}  {};
 
 void RosterDelegate::paint(QPainter* painter,
                            const QStyleOptionViewItem& option,
@@ -71,7 +66,8 @@ void RosterDelegate::paint(QPainter* painter,
     painter->drawRoundedRect(layout->baseRect, spec.cornerRadius, spec.cornerRadius);
 
     // --- Hover/active outline ---
-    if (isHovered || isCurrentIndex) {
+    // no hover border effect on sentinel cell
+    if (index.row() < index.model()->rowCount() - 1 && (isHovered || isCurrentIndex)) {
         QPen hoverPen(ColorRepository::hoverOutlineBrush(layout->baseRect), 1.5);
         painter->setPen(hoverPen);
         painter->setBrush(Qt::NoBrush);
@@ -97,9 +93,6 @@ bool RosterDelegate::editorEvent(QEvent *event,
 
     if (event->type() == QEvent::MouseButtonRelease) {
 
-        const QWidget* viewport = option.widget;
-        auto* view = qobject_cast<QListView*>(viewport->parentWidget());
-
         // --- Character payload ---
         const QVariant charVar = index.data(Cyrus::CharacterRole);
         if (!charVar.canConvert<std::shared_ptr<Character>>()) {
@@ -116,7 +109,7 @@ bool RosterDelegate::editorEvent(QEvent *event,
 
         auto callback = engine->hitTest(index, layout, character, localCursor);
         if(callback){
-            callback->execute(view);
+            callback->execute(this);
             return true;
         }
     }
@@ -124,18 +117,103 @@ bool RosterDelegate::editorEvent(QEvent *event,
     return false;
 }
 
-QSize RosterDelegate::sizeHint(const QStyleOptionViewItem& option,
-                                   const QModelIndex& index) const {
+QWidget* RosterDelegate::createEditor(QWidget* parent,
+                                      const QStyleOptionViewItem& option,
+                                      const QModelIndex& index) const
+{
+    auto* model = index.model();
+    int sentinelRow = model->rowCount() - 1;
 
-    std::shared_ptr<Character> character;
-    const QVariant charVar = index.data(Cyrus::CharacterRole);
-    if (!charVar.canConvert<std::shared_ptr<Character>>()) { 
-        //Mock character for size hint when the list is empty
-        character = std::make_shared<Character>("SIZE_HINT_DEFAULT", 10, 0, 0, Cyrus::CharacterType::Fighter, Cyrus::ActionType::Cast);
+    if (!index.isValid()) {
+        qDebug() << " -> Index invalid! Aborting editor creation.";
+        return nullptr;
     }
-    character = charVar.value<std::shared_ptr<Character>>();
 
-    const int width     = minimumWidth(*character);
+    if (index.row() != sentinelRow) {
+        qDebug() << " -> Not sentinel row, using default editor.";
+        return QStyledItemDelegate::createEditor(parent, option, index);
+    }
+
+    auto* engine = LayoutFactory::rosterLayoutEngine();
+    auto handle = engine->createEditorHandle(parent);
+
+    if (!handle.widget) {
+        return nullptr;
+    }
+
+    if (handle.command.has_value()) {
+        handle.command->execute(const_cast<RosterDelegate*>(this));
+    }
+
+    return handle.widget;
+}
+
+void RosterDelegate::updateEditorGeometry(QWidget* editor,
+                                          const QStyleOptionViewItem& option,
+                                          const QModelIndex& index) const
+{
+    // --- Character payload ---
+    const QVariant charVar = index.data(Cyrus::CharacterRole);
+    if (!charVar.canConvert<std::shared_ptr<Character>>()) {
+        return;
+    }
+    auto character = charVar.value<std::shared_ptr<Character>>();
+
+    if (character->isSentinel()) {
+
+        const auto& spec = character->layoutSpec();
+
+        // calculate rects
+        auto* engine = LayoutFactory::rosterLayoutEngine();
+        auto layout = engine->calculate(option.rect, character, false, false);
+        auto sentinelLayout = std::dynamic_pointer_cast<SentinelLayout>(layout);
+        if (!sentinelLayout) return;
+
+        qDebug() << "updateEditorGeometry()";
+        qDebug() << "  option.rect:" << option.rect;
+        qDebug() << "  mainRowRect:" << sentinelLayout->mainRowRect;
+        qDebug() << "  lineEditFrame:" << sentinelLayout->lineEditFrame;
+        qDebug() << "  buttonFrame:" << sentinelLayout->buttonFrame;
+
+        editor->setGeometry(sentinelLayout->mainRowRect);
+
+        // Now position children relative to editor
+        if (auto* container = qobject_cast<SentinelEditor*>(editor)) {
+            // line edit
+            qDebug() << "  setting lineEdit geometry to" << sentinelLayout->lineEditFrame;
+            auto lineEdit = container->lineEdit();
+            lineEdit->setGeometry(sentinelLayout->lineEditFrame);
+
+            // button
+            auto button = container->addButton();
+            qDebug() << "  setting button geometry to" << sentinelLayout->buttonFrame;
+            button->setGeometry(sentinelLayout->buttonFrame);
+            button->setIconSize(button->size());
+        }
+    }
+}
+
+
+
+QSize RosterDelegate::sizeHint(const QStyleOptionViewItem& option,
+                               const QModelIndex& index) const 
+{
+    std::shared_ptr<Character> character;
+
+    const QVariant charVar = index.data(Cyrus::CharacterRole);
+    if (charVar.isValid() && charVar.canConvert<std::shared_ptr<Character>>()) {
+        character = charVar.value<std::shared_ptr<Character>>();
+    } else {
+        // Mock character for sentinel or empty case
+        character = std::make_shared<Character>(
+            "SIZE_HINT_DEFAULT",
+            10, 0, 0,
+            Cyrus::CharacterType::Fighter,
+            Cyrus::ActionType::Cast
+        );
+    }
+
+    const int width  = minimumWidth(*character);
     const int height = character->layoutSpec().preferredHeight;
 
     return QSize(width, height);
@@ -154,6 +232,6 @@ QPoint RosterDelegate::cursorPosInItem(const QStyleOptionViewItem& option, const
 }
 
 int RosterDelegate::minimumWidth(const Character& character) const {
-    // calculate the mimimum width of the rows
-    return 400;
+    RosterLayoutEngine engine;
+    return engine.minimumWidth(std::make_shared<Character>(character));
 }

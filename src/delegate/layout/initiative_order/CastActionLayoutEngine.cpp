@@ -9,6 +9,7 @@
 #include "CastAction.h"
 #include <QApplication>
 #include <QPainter>
+#include "InitiativeDelegate.h"
 
 
 std::shared_ptr<Layout> CastActionLayoutEngine::calculate(
@@ -25,7 +26,7 @@ std::shared_ptr<Layout> CastActionLayoutEngine::calculate(
 
     // --- base + main row ---
     layout.baseRect     = LayoutUtils::padRectangle(rect, padding); //unpadded, used to build the top and bottom row rects
-    layout.mainRowRect  = LayoutUtils::buildMainRowRect(rect, false, padding);
+    layout.mainRowRect  = LayoutUtils::buildHeroMainRowRect(rect, false, padding);
 
     // --- left-hand controls (hero + initiative + duration icon + duration text) ---
     LayoutUtils::LeftAnchorBuilder left(layout.mainRowRect);
@@ -66,9 +67,10 @@ std::optional<HitCommand> CastActionLayoutEngine::hitTest(
 
     // Only delete button is clickable
     if (cLayout->deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this](QListView* /*view*/) {
+        return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+            auto d = dynamic_cast<InitiativeDelegate*>(delegate);
             qDebug() << "Delete button clicked for cast action at row:" << index.row();
-            emit deleteItemClicked(index);
+            emit d->deleteItem(index);
         }};
     }
 

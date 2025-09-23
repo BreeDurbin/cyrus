@@ -45,8 +45,5 @@ struct MiscActionLayoutEngine : LayoutEngine {
 
     int minimumWidth(
         const std::shared_ptr<Character>& character) const override;
-
-    signals:
-        void deleteItemClicked(const QModelIndex& index) const;
                                 
 };

@@ -4,7 +4,7 @@
     <file>image/CYRUS_BANNER.png</file>
     <file>image/CYRUS_BANNER_TINY.png</file>
     <file>image/CYRUS_ICON_TINY.png</file>
-    <file>image/Designer.png</file>
     <file>image/Highlands_Background.png</file>
+    <file>image/CYRUS_BACKGROUND.png</file>
   </qresource>
 </RCC>

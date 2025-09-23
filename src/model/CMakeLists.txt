@@ -10,6 +10,8 @@ add_library(model STATIC
     data/MiscAction.h
     CharacterModel.cpp
     CharacterModel.h
+    RosterModel.cpp
+    RosterModel.h
 )
 
 target_include_directories(

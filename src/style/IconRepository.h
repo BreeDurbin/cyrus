@@ -13,7 +13,8 @@ namespace IconRepository {
         { Cyrus::CharacterType::Fighter,   ":/icon/class/character_icon5.png" },
         { Cyrus::CharacterType::Monster,   ":/icon/class/character_icon2.png" },
         { Cyrus::CharacterType::Paladin,   ":/icon/class/Paladin_Symbol.png" },
-        { Cyrus::CharacterType::Wizard,    ":/icon/class/Wizard_Symbol.png" }
+        { Cyrus::CharacterType::Wizard,    ":/icon/class/Wizard_Symbol.png" },
+        { Cyrus::CharacterType::Unset,     ":/icon/class/character_icon1.png" }
     };
 
     inline const QHash<Cyrus::MiscActionType, QString> miscActionIconPaths = {
@@ -99,11 +100,6 @@ namespace IconRepository {
         return icon;
     }
 
-    inline QIcon load_icon() {
-        static const QIcon icon(":/icon/ui/load_icon.png");
-        return icon;
-    }
-
     inline QIcon hourglass_icon() {
         static const QIcon icon(":/icon/action/hourglass_icon.png");
         return icon;
@@ -144,5 +140,15 @@ namespace IconRepository {
         static QIcon dark(":icon/ui/right_arrow_dark_icon.png");
         static QIcon light(":icon/ui/right_arrow_light_icon.png");
         return isDark ? dark : light;
+    }
+
+    inline QIcon down_arrow_icon() {
+        static const QIcon icon(":/control/down_button.png");
+        return icon;
+    }
+
+    inline QIcon plus_icon() {
+        static const QIcon icon(":/control/plus_button.png");
+        return icon;
     }
 }

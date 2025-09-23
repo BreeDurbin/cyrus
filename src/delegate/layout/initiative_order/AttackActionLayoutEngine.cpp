@@ -6,6 +6,7 @@
 #include "ColorRepository.h"
 #include <QApplication>
 #include "LayoutUtils.h"
+#include "InitiativeDelegate.h"
 
 std::shared_ptr<Layout> AttackActionLayoutEngine::calculate(
     const QRect& rect,
@@ -21,7 +22,7 @@ std::shared_ptr<Layout> AttackActionLayoutEngine::calculate(
 
     // --- base + main row ---
     layout.baseRect     = LayoutUtils::padRectangle(rect, padding); //unpadded, used to build the top and bottom row rects
-    layout.mainRowRect  = LayoutUtils::buildMainRowRect(rect, false, padding);
+    layout.mainRowRect  = LayoutUtils::buildHeroMainRowRect(rect, false, padding);
 
     // --- left-hand controls (hero + initiative) ---
     LayoutUtils::LeftAnchorBuilder left(layout.mainRowRect);
@@ -54,7 +55,8 @@ std::optional<HitCommand> AttackActionLayoutEngine::hitTest(
 
     // Delete button
     if (cLayout->deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this](QListView* /*view*/) {
+        return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+            auto d = dynamic_cast<InitiativeDelegate*>(delegate);
             qDebug() << "Delete button clicked.";
             emit deleteItemClicked(index);
         }};

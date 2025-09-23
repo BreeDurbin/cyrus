@@ -94,30 +94,6 @@ struct CharacterLayoutEngine : LayoutEngine {
         int minimumWidth(
             const std::shared_ptr<Character>& character) const override;
 
-    signals:
-        // Main row
-        void cancelActionClicked(const QModelIndex& index);
-        void deleteItemClicked(const QModelIndex& index) const;
-        void iconSelectorClicked(const QModelIndex& index, Cyrus::ActionType actionType);
-        void decrementInitiativeClicked(const QModelIndex& index);
-        void incrementInitiativeClicked(const QModelIndex& index);
-        //cast row
-        void spellNameEdited(const QUuid& id, const QString& name) const;
-        void decrementCastingTimeClicked(const QUuid& id);
-        void incrementCastingTimeClicked(const QUuid& id);
-        void decrementDurationClicked(const QUuid& id);
-        void incrementDurationClicked(const QUuid& id);
-        void castSubmitClicked(const QUuid& id, const std::shared_ptr<Character>& character);
-        // attack row
-        void decrementAttackAmountClicked(const QModelIndex& index);
-        void incrementAttackAmountClicked(const QModelIndex& index);
-        void decrementWeaponSpeedClicked(const QModelIndex& index);
-        void incrementWeaponSpeedClicked(const QModelIndex& index);
-        void attackSubmitClicked(const QModelIndex& index);
-        //misc row
-        void miscSubmitClicked(const QModelIndex& index);
-        void iconSelectorClicked(const QModelIndex& index, Cyrus::MiscActionType miscActionType);
-
     private:
 
         //--------- Helpers -----------

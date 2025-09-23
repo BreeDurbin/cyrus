@@ -14,6 +14,8 @@ add_library(
     layout/core/LayoutUtils.h
     layout/core/PainterUtils.cpp
     layout/core/PainterUtils.h
+    layout/core/SentinelEditor.cpp
+    layout/core/SentinelEditor.h
     layout/initiative_order/CharacterLayoutEngine.cpp
     layout/initiative_order/CharacterLayoutEngine.h
     layout/initiative_order/AttackActionLayoutEngine.cpp

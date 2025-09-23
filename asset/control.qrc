@@ -3,6 +3,9 @@
   <file>control/label_border.png</file>
   <file>control/next_button.png</file>
   <file>control/prev_button.png</file>
+  <file>control/up_button.png</file>
+  <file>control/down_button.png</file>
+  <file>control/plus_button.png</file>
   <file>control/clear_button.png</file>
   </qresource>
 </RCC>

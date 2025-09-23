@@ -42,5 +42,47 @@ namespace PainterUtils {
     }
 
 
+    void paintStyledLineEdit(QPainter* painter, const QRect& rect,
+                         const QString& text, const QString& placeholder,
+                         bool hasFocus, bool isEnabled)
+    {
+        painter->save();
+
+        // --- Background ---
+        QColor bgColor = isEnabled ? ColorRepository::baseBackground() 
+                                : ColorRepository::buttonBackground();
+        painter->setBrush(bgColor);
+        QColor borderColor = hasFocus ? ColorRepository::pressedOutlineColor()
+                                    : ColorRepository::buttonOutlineColor();
+        painter->setPen(borderColor);
+        painter->drawRoundedRect(rect, 6, 6);
+
+        // --- Text ---
+        painter->setPen(isEnabled ? ColorRepository::text()
+                                : ColorRepository::hoverTextColor());
+        QFont font(StyleRepository::textFontFamily());
+        painter->setFont(font);
+
+        QFontMetrics fm(font);
+        int paddingLeft = 8;  // match padding in stylesheet
+        int paddingTop = 4;
+
+        QRect textRect = rect.adjusted(paddingLeft, paddingTop, -paddingLeft, -paddingTop);
+
+        if (!text.isEmpty()) {
+            painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, text);
+        } else {
+            // Placeholder text in italic
+            QFont placeholderFont = font;
+            placeholderFont.setItalic(true);
+            painter->setFont(placeholderFont);
+            painter->setPen(ColorRepository::placeholderText());
+            painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, placeholder);
+        }
+
+        painter->restore();
+    }
+
+
 
 } // namespace PainterUtils

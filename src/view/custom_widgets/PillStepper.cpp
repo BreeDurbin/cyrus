@@ -69,11 +69,17 @@ void PillStepper::paintEvent(QPaintEvent*) {
 
 
 void PillStepper::mousePressEvent(QMouseEvent* event) {
+    // Give the stepper focus when clicked
+    setFocus(Qt::MouseFocusReason);
+
     if (rects_.leftRect.contains(event->pos())) {
         emit stepBackward();
     } else if (rects_.rightRect.contains(event->pos())) {
         emit stepForward();
     }
+
+    // Call base class in case it does anything else
+    QWidget::mousePressEvent(event);
 }
 
 QSize PillStepper::sizeHint() const {

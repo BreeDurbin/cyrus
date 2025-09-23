@@ -59,8 +59,9 @@ namespace LayoutUtils {
         QRect text(int width, int padding, int height = -1) {
             if (height < 0) height = baseRect.height();
             int y = baseRect.top() + (baseRect.height() - height) / 2;
+            cursorX -= width;         
             QRect r(cursorX, y, width, height);
-            cursorX += width + padding;
+            cursorX -= padding;     
             return r;
         }
 
@@ -73,7 +74,7 @@ namespace LayoutUtils {
     };
 
 
-    inline QRect buildMainRowRect(const QRect& base, bool isExpanded, int padding) {
+    inline QRect buildHeroMainRowRect(const QRect& base, bool isExpanded, int padding) {
         QRect rowRect;
 
         if (isExpanded) {
@@ -91,6 +92,15 @@ namespace LayoutUtils {
 
         // Apply horizontal and vertical padding
         rowRect.adjust( 0, padding, -(2 * padding), -padding);
+
+        return rowRect;
+    }
+
+    inline QRect buildMainRowRect(const QRect& base, int padding) {
+        QRect rowRect = base;
+
+        // Apply horizontal and vertical padding
+        rowRect.adjust( padding, padding, -padding, -padding);
 
         return rowRect;
     }

@@ -17,7 +17,18 @@ struct Layout {
 
 // view needed for edit support
 struct HitCommand {
-    std::function<void(QListView*)> execute;
+    std::function<void(QAbstractItemDelegate*)> execute;
+};
+
+// item delegate passed in for emiting commit signals
+struct EditorCommand {
+    std::function<void(QAbstractItemDelegate*)> execute;
+};
+
+
+struct EditorHandle {
+    QWidget* widget;         
+    std::optional<EditorCommand> command;
 };
 
 struct LayoutEngine : public QObject {

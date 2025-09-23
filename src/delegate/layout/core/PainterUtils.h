@@ -9,4 +9,8 @@
 namespace PainterUtils {
     void paintIcon(QPainter* painter, const QIcon& icon, const QRect& rect,
                 bool selected, bool hovered, bool pressed, int iconSize);
+
+    void paintStyledLineEdit(QPainter* painter, const QRect& rect,
+                        const QString& text, const QString& placeholder,
+                        bool hasFocus, bool isEnabled);
 } // namespace PainterUtils

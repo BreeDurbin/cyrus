@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QPushButton>
 #include <QPainter>
 #include <QPushButton>

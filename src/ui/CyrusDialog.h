@@ -3,12 +3,9 @@
 #include <QMainWindow>
 #include <QItemSelectionModel>
 #include <QAbstractItemModel>
-#include "CharacterModel.h"
 #include "RosterDelegate.h"
 #include "InitiativeDelegate.h"
 #include "CombatLogDelegate.h"
-#include "InitiativeView.h"
-#include "PillStepper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CyrusDialog; }
@@ -25,6 +22,9 @@ public:
 signals:
     void addRosterToInitiative();
     void addRosterMemberToInitiative(const QModelIndex& index);
+
+public slots:
+    void onRosterSelectionChanged(const QString& selectedRoster);
 
 private:
     Ui::CyrusDialog* ui;  // generated UI object
@@ -44,9 +44,7 @@ private:
     // UI-only setup helpers
     void setupMainDialog();
     void setupHeroFrame();
-    void setupIconSelector();
     void setupLabels();
-    void setupLineEdits();
     void setupButtons();
     void setupComboBoxes();
     void setupCustomWidgets();

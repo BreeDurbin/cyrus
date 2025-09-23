@@ -11,6 +11,7 @@
 #include "PainterUtils.h"
 #include "InitiativeView.h"
 #include <QApplication>
+#include "InitiativeDelegate.h"
 
 // ----------------- Public API -----------------
 
@@ -27,7 +28,7 @@ std::shared_ptr<Layout> CharacterLayoutEngine::calculate(
 
     // --- base + rows ---
     layout.baseRect     = LayoutUtils::padRectangle(rect, padding); //unpadded, used to build the top and bottom row rects
-    layout.mainRowRect  = LayoutUtils::buildMainRowRect(rect, isExpanded, padding);
+    layout.mainRowRect  = LayoutUtils::buildHeroMainRowRect(rect, isExpanded, padding);
     layout.dropdownRect = isExpanded ? LayoutUtils::buildDropdownRect(rect, layout.mainRowRect, padding) : QRect();
 
     int rowHeight = layout.mainRowRect.height();
@@ -132,14 +133,16 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
 
         if (stepper.leftRect.contains(cursorPos)) {
             qDebug() << "Initiative minus clicked." << id << " index " << index.row();
-            return HitCommand{ [index, this](QListView* /*view*/) {
-                emit decrementInitiativeClicked(index);
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->decrementInitiative(index);
             }};
         }
         if (stepper.rightRect.contains(cursorPos)) {
             qDebug() << "Initiative plus clicked." << id << " index " << index.row();
-            return HitCommand{ [index, this](QListView* /*view*/) {
-                emit incrementInitiativeClicked(index);
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->incrementInitiative(index);
             }};
         }
         // TODO implement editing
@@ -156,9 +159,10 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
 
     // Delete button
     if (cLayout->top.deleteButtonRect.contains(cursorPos)) {
-        return HitCommand{ [index, this](QListView* /*view*/) {
+        return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+            auto d = dynamic_cast<InitiativeDelegate*>(delegate);
             qDebug() << "Delete button clicked.";
-            emit deleteItemClicked(index);
+            emit d->deleteItem(index);
         }};
     }
 
@@ -167,9 +171,10 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
         // Normal action icons
         for (int actionIconIndex = 0; actionIconIndex < cLayout->top.actionIconRects.size(); ++actionIconIndex) {
             if (cLayout->top.actionIconRects[actionIconIndex].contains(cursorPos)) {
-                return HitCommand{ [index, actionIconIndex, this](QListView* /*view*/) {
+                return HitCommand{ [index, actionIconIndex, this](QAbstractItemDelegate* delegate) {
+                    auto d = dynamic_cast<InitiativeDelegate*>(delegate);
                     qDebug() << "Action Icon " << QString::number(actionIconIndex) << " clicked.";
-                    emit iconSelectorClicked(index, static_cast<Cyrus::ActionType>(actionIconIndex));
+                    emit d->iconSelected(index, static_cast<Cyrus::ActionType>(actionIconIndex));
                 }};
             }
         }
@@ -177,9 +182,10 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
         // Cancel icon
         if (!cLayout->top.actionIconRects.isEmpty() &&
             cLayout->top.actionIconRects[0].contains(cursorPos)) {
-            return HitCommand{ [index, this](QListView* /*view*/) {
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
                 qDebug() << "Cancel icon clicked.";
-                emit cancelActionClicked(index);   // <-- you define this signal in controller
+                emit d->cancelAction(index);   // <-- you define this signal in controller
             }};
         }
     }
@@ -189,32 +195,51 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
         auto& cast = *cLayout->cast;
         if (cast.spellEdit.contains(cursorPos)) {
             qDebug() << "Cast spell edit clicked." << id << " index " << index.row();
-            return HitCommand{ [index, this](QListView* view) { 
-                if (auto* initiativeView = qobject_cast<InitiativeView*>(view)){;
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                if (auto* initiativeView = qobject_cast<InitiativeView*>(d->view())){;
                     initiativeView->editCustom(index);
                 }
             }};
         }
         if (cast.castingTimeStepperRects.leftRect.contains(cursorPos)) {
             qDebug() << "Cast casting time minus button clicked." << id << " index " << index.row();
-            return HitCommand{ [id, this](QListView* /*view*/) { emit decrementCastingTimeClicked(id); } };
+            return HitCommand{ [id, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->decrementCastingTime(id);
+            } };
         }
         if (cast.castingTimeStepperRects.rightRect.contains(cursorPos)) {
             qDebug() << "Cast casting time plus button clicked." << id << " index " << index.row();
-            return HitCommand{ [id, this](QListView* /*view*/) { emit incrementCastingTimeClicked(id); } };
+            return HitCommand{ [id, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->incrementCastingTime(id); 
+            } };
         }
         if (cast.durationStepperRects.leftRect.contains(cursorPos)) {
             qDebug() << "Cast duration minus button clicked." << id << " index " << index.row();
-            return HitCommand{ [id, this](QListView* /*view*/) { emit decrementDurationClicked(id); } };
+            return HitCommand{ [id, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->decrementDuration(id); 
+            } };
         }
         if (cast.durationStepperRects.rightRect.contains(cursorPos)) {
             qDebug() << "Cast duration plus button clicked." << id << " index " << index.row();
-            return HitCommand{ [id, this](QListView* /*view*/) { emit incrementDurationClicked(id); } };
+            return HitCommand{ [id, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->incrementDuration(id); 
+            } };
         }
         if (cast.submitButtonRect.contains(cursorPos)) {
             qDebug() << "Cast submit button clicked." << id << " index " << index.row();
-            return HitCommand{ [id, index, this, character](QListView* /*view*/) {
-                emit castSubmitClicked(id, character);
+            return HitCommand{ [id, index, this, character](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->castSubmitted(id, character);
+                QWidget* editor = d->editorForIndex(index);
+                if (auto* lineEdit = qobject_cast<QLineEdit*>(editor)) {
+                    emit d->commitData(lineEdit);
+                    emit d->closeEditor(lineEdit);
+                }
             }};
         }
     }
@@ -224,21 +249,34 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
         auto& attack = *cLayout->attack;
 
         if (attack.attackAmountStepperRects.leftRect.contains(cursorPos)) {
-            return HitCommand{ [index, this](QListView* /*view*/) { emit decrementAttackAmountClicked(index); } };
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->decrementAttackAmount(index); 
+            } };
         }
         if (attack.attackAmountStepperRects.rightRect.contains(cursorPos)) {
-            return HitCommand{ [index, this](QListView* /*view*/) { emit incrementAttackAmountClicked(index); } };
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->incrementAttackAmount(index); 
+            } };
         }
         if (attack.weaponSpeedStepperRects.leftRect.contains(cursorPos)) {
-            return HitCommand{ [index, this](QListView* /*view*/) { emit decrementWeaponSpeedClicked(index); } };
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->decrementWeaponSpeed(index); 
+            } };
         }
         if (attack.weaponSpeedStepperRects.rightRect.contains(cursorPos)) {
-            return HitCommand{ [index, this](QListView* /*view*/) { emit incrementWeaponSpeedClicked(index); } };
+            return HitCommand{ [index, this](QAbstractItemDelegate* delegate) { 
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->incrementWeaponSpeed(index); 
+            } };
         }
         if (attack.submitButtonRect.contains(cursorPos)) {
             qDebug() << "Attack submit button clicked.";
-            return HitCommand{ [index, this, character](QListView* /*view*/) {
-                emit attackSubmitClicked(index);
+            return HitCommand{ [index, this, character](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->attackSubmitted(index);
             }};
         }
     }
@@ -248,17 +286,19 @@ std::optional<HitCommand> CharacterLayoutEngine::hitTest(
 
         for (int miscActionIconIndex = 0; miscActionIconIndex < misc.miscActionIconRects.size(); ++miscActionIconIndex) {
             if (misc.miscActionIconRects[miscActionIconIndex].contains(cursorPos)) {
-                return HitCommand{ [index, miscActionIconIndex, this](QListView* /*view*/) {
+                return HitCommand{ [index, miscActionIconIndex, this](QAbstractItemDelegate* delegate) {
+                    auto d = dynamic_cast<InitiativeDelegate*>(delegate);
                     qDebug() << "Misc Action Icon " << QString::number(miscActionIconIndex) << " clicked.";
-                    emit iconSelectorClicked(index, static_cast<Cyrus::MiscActionType>(miscActionIconIndex));
+                    emit d->iconSelected(index, static_cast<Cyrus::MiscActionType>(miscActionIconIndex));
                 }};
             }
         }
 
         if (misc.submitButtonRect.contains(cursorPos)) {
             qDebug() << "Misc submit button clicked.";
-            return HitCommand{ [index, this, character](QListView* /*view*/) {
-                emit miscSubmitClicked(index);
+            return HitCommand{ [index, this, character](QAbstractItemDelegate* delegate) {
+                auto d = dynamic_cast<InitiativeDelegate*>(delegate);
+                emit d->miscSubmitted(index);
             }};
         }
     }

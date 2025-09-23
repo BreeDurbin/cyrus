@@ -13,9 +13,7 @@ namespace StyleRepository
     QString itemView();
     QString pushButton();
     QString iconPushButton();
-    QString spinBox();
     QString lineEdit();
-    QString comboBox();
 
     QString titleFontFamily();
     QFont titleFont(int pointSize = 12, bool bold = false);

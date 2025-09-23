@@ -51,6 +51,15 @@
        <enum>QFrame::Shadow::Raised</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
        <item>
         <spacer name="horizontalSpacer_6">
          <property name="orientation">
@@ -88,32 +97,23 @@
     </item>
     <item>
      <widget class="QFrame" name="initiativeFrame">
-      <layout class="QHBoxLayout" name="outerHorizontalLayout" stretch="0,1,2,1">
-       <item>
-        <widget class="QFrame" name="iconSelectorFrame">
-         <layout class="QVBoxLayout" name="IconSelectorLayout">
-          <item>
-           <widget class="IconSelector" name="iconSelector" native="true"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
+      <layout class="QHBoxLayout" name="outerHorizontalLayout" stretch="1,2,1">
        <item>
         <widget class="QFrame" name="rosterFrame">
          <layout class="QVBoxLayout" name="controlPanelVerticalLayout">
           <item>
            <layout class="QHBoxLayout" name="participantsLabelLayout">
             <property name="spacing">
-             <number>12</number>
+             <number>6</number>
             </property>
             <property name="leftMargin">
              <number>0</number>
             </property>
             <property name="topMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>8</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
              <number>4</number>
@@ -133,50 +133,34 @@
                </font>
               </property>
               <property name="text">
-               <string>  Participants:  </string>
+               <string>  Participants:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="rosterGroupsComboBox"/>
-            </item>
-            <item>
-             <widget class="QPushButton" name="loadButton">
-              <property name="text">
-               <string/>
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="saveButton">
-              <property name="text">
-               <string/>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
               </property>
-             </widget>
+             </spacer>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="QLineEdit" name="characterNameLineEdit">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
+             <widget class="CyrusComboBox" name="rosterGroupsComboBox" native="true">
               <property name="minimumSize">
                <size>
-                <width>180</width>
-                <height>0</height>
+                <width>120</width>
+                <height>20</height>
                </size>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-              <property name="placeholderText">
-               <string>Enter Character Name ...</string>
               </property>
              </widget>
             </item>
@@ -194,31 +178,19 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="addCharacterButton">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
+             <widget class="QPushButton" name="saveButton">
               <property name="text">
-               <string>+</string>
+               <string/>
               </property>
              </widget>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="IconSelectorHorizontalLayout"/>
+           <layout class="QHBoxLayout" name="comboBoxHorizontalLayout"/>
           </item>
           <item>
-           <widget class="QListView" name="roster">
+           <widget class="RosterView" name="roster">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -488,12 +460,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>IconSelector</class>
-   <extends>QWidget</extends>
-   <header>IconSelector.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>InitiativeView</class>
    <extends>QListView</extends>
    <header>InitiativeView.h</header>
@@ -503,6 +469,17 @@
    <extends>QWidget</extends>
    <header location="global">PillStepper.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CyrusComboBox</class>
+   <extends>QWidget</extends>
+   <header>CyrusComboBox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RosterView</class>
+   <extends>QListView</extends>
+   <header>RosterView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

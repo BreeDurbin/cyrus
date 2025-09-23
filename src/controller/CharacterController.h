@@ -9,6 +9,7 @@
 
 class InitiativeView;
 class CharacterModel;
+class RosterModel;
 class Character;
 
 class CharacterController : public QObject {
@@ -17,13 +18,13 @@ public:
     CharacterController(InitiativeView* initiativeView,
                         CharacterModel* initiativeOrderModel,
                         CharacterModel* combatLogModel,
-                        CharacterModel* rosterModel,
+                        RosterModel* rosterModel,
                         QObject* parent = nullptr);
 
 
     CharacterModel* initiativeModel() const { return initiativeOrderModel_; }
     CharacterModel* combatLogModel() const { return combatLogModel_; }
-    CharacterModel* rosterModel() const { return rosterModel_; }
+    RosterModel* rosterModel() const { return rosterModel_; }
     CastState stateFor(const QUuid& id) {
         return states_.value(id);
     }
@@ -72,7 +73,7 @@ public slots:
     void miscSubmitted(const QModelIndex& index);
 
     // button handlers
-    QModelIndex addToRoster(const QString &name, Cyrus::CharacterType type);
+    QModelIndex addToRoster(const QString &name);
     void advanceInitiative();
     void backtrackInitiative();
     void addRosterToInitiative();
@@ -97,7 +98,7 @@ private:
     InitiativeView* initiativeView_;
     CharacterModel* initiativeOrderModel_;
     CharacterModel* combatLogModel_;
-    CharacterModel* rosterModel_;
+    RosterModel* rosterModel_;
 
     // helpers
     bool progressAction(const QModelIndex& index, const std::shared_ptr<Character> character);

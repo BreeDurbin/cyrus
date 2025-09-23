@@ -7,12 +7,23 @@
 #include "Character.h"
 #include "CharacterController.h"
 #include <QLineEdit>
+#include <QAbstractItemView>
+#include <QPointer>
+#include <QWidget>
+#include <QPersistentModelIndex>
+#include <QHash>
+
 
 class InitiativeDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
     public:
-        explicit InitiativeDelegate(CharacterController* characterController, QObject *parent = nullptr);
+        explicit InitiativeDelegate(CharacterController* characterController, 
+                                    QAbstractItemView* view, 
+                                    QObject* parent = nullptr)
+                                      : QStyledItemDelegate{parent},
+                                        characterController_{characterController},
+                                        view_{view} {};
 
         void paint(QPainter* painter,
                 const QStyleOptionViewItem& option,
@@ -28,11 +39,11 @@ class InitiativeDelegate : public QStyledItemDelegate {
         void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
         void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
         QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+        QAbstractItemView* view() const { return view_; }
+        QWidget* editorForIndex(const QModelIndex& index) const;
+        QModelIndex indexForEditor(QWidget* editor) const;
 
     signals:
-        //update item state 
-        void commitData(const QLineEdit* lineEdit) const;
-        void closeEditor(const QLineEdit* lineEdit) const;
 
         //Cast Actions
         void spellNameEdited(const QUuid& id, const QString& name) const;
@@ -68,12 +79,12 @@ class InitiativeDelegate : public QStyledItemDelegate {
         bool checkHovered(const QStyleOptionViewItem &option) const;
         bool checkIfCharacter(std::shared_ptr<Character> character) const;
         QPoint cursorPosInItem(const QStyleOptionViewItem& option, const QEvent* event = nullptr) const;
-        QColor backgroundForState(const Cyrus::CombatSequenceState state,
-                                 const std::shared_ptr<Character>& character,
-                                 bool isActiveIndex,
-                                 bool isCurrentInitiative) const;
+        QColor backgroundForState(const Cyrus::CombatSequenceState state, const std::shared_ptr<Character>& character, 
+                                                    bool isActiveIndex, bool isCurrentInitiative) const;
 
     private:
+        mutable QHash<QPersistentModelIndex, QPointer<QWidget>> editors_;
+        QAbstractItemView* view_;
         CharacterController* characterController_;
 
 };

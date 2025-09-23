@@ -15,7 +15,14 @@ public:
     QStyleOptionViewItem makeViewOptions() const;
     void refreshIndex(const QModelIndex& index);
     bool editCustom(const QModelIndex& index);
+    void setItemDelegate(QAbstractItemDelegate* delegate);
+    QModelIndex indexForEditor(QWidget* editor) const;
 
+
+
+public slots:
+    void onCommitData(QWidget* editor);
+    void onCloseEditor(QWidget* editor);
 
 protected:
     QPersistentModelIndex activeIndex_; 

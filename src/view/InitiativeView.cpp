@@ -4,6 +4,7 @@
 #include <QAbstractItemDelegate>
 #include <QLineEdit>
 #include <QDebug>
+#include "InitiativeDelegate.h"
 
 void InitiativeView::mousePressEvent(QMouseEvent* event) {
     //qDebug() << "InitiativeView::mousePressEvent(QMouseEvent* event)";
@@ -97,19 +98,6 @@ bool InitiativeView::editCustom(const QModelIndex& index) {
     editor->show();
     editor->setFocus();
 
-    // Step 5: connect commit/close cycle
-    connect(editor, &QWidget::destroyed, this, [=]() {
-        qDebug() << "editCustom: editor destroyed for row" << index.row();
-    });
-
-    // If it’s a QLineEdit, hook commit
-    if (auto* line = qobject_cast<QLineEdit*>(editor)) {
-        connect(line, &QLineEdit::editingFinished, this, [this, line, index, editor]() {
-            qDebug() << "editCustom: committing data for row" << index.row();
-            itemDelegate()->setModelData(line, model(), index);
-            editor->deleteLater();
-        });
-    }
 
     // Step 6: update our custom active index
     activeIndex_ = index;
@@ -119,3 +107,44 @@ bool InitiativeView::editCustom(const QModelIndex& index) {
     return true;
 }
 
+void InitiativeView::setItemDelegate(QAbstractItemDelegate* delegate) {
+    if (itemDelegate() == delegate)
+        return;
+
+    // Disconnect old delegate’s auto connections
+    if (itemDelegate()) {
+        disconnect(itemDelegate(), nullptr, this, nullptr);
+    }
+
+    QAbstractItemView::setItemDelegate(delegate);
+
+    // Override the degault connections to QAbstractItemView’s default slots
+    // Instead connect InitiativeView's handlers
+    if (delegate) {
+        qDebug() << "Connecting commitData and closeEditor signals.";
+        connect(delegate, &QAbstractItemDelegate::commitData,
+                this, &InitiativeView::onCommitData);
+        connect(delegate, &QAbstractItemDelegate::closeEditor,
+                this, &InitiativeView::onCloseEditor);
+    }
+}
+
+void InitiativeView::onCommitData(QWidget* editor) {
+    qDebug() << "InitiativeView::onCommitData()";
+    auto* d = qobject_cast<InitiativeDelegate*>(itemDelegate());
+    if (!d) return;
+
+    QModelIndex idx = d->indexForEditor(editor);
+    if (!idx.isValid()) {
+        qDebug() << "CommitData: editor has no index mapping";
+        return;
+    }
+
+    itemDelegate()->setModelData(editor, model(), idx);
+}
+
+void InitiativeView::onCloseEditor(QWidget* editor) {
+    qDebug() << "InitiativeView::onCloseEditor()";
+    editor->deleteLater();
+    viewport()->update();
+}

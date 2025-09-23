@@ -1,5 +1,7 @@
 #include "CharacterController.h"
+
 #include "CharacterModel.h"
+#include "RosterModel.h"
 #include "Character.h"
 #include "InitiativeView.h"
 #include "CastAction.h"
@@ -14,7 +16,7 @@
 CharacterController::CharacterController(InitiativeView* initiativeView,
                                         CharacterModel* initiativeOrderModel,
                                         CharacterModel* combatLogModel,
-                                        CharacterModel* rosterModel,
+                                        RosterModel* rosterModel,
                                         QObject* parent)
     : QObject(parent),
     initiativeView_(initiativeView),
@@ -57,6 +59,11 @@ void CharacterController::deleteItem(const QModelIndex& index) {
     if (active.isValid() && active == index) {
         advanceInitiative();
     }
+
+    // if item is a base character kill all child actions
+    auto character = initiativeOrderModel_->getItem(index);
+    if (!character) return;
+    if(typeid(*character) == typeid(Character)) cancelAction(index);
 
     initiativeOrderModel_->removeRow(index.row());
 }
@@ -460,8 +467,8 @@ void CharacterController::backtrackInitiative() {
     emit currentInitiativeChanged(previousIndex);
 }
 
-QModelIndex CharacterController::addToRoster(const QString &name, Cyrus::CharacterType type){
-    rosterModel_->appendItem(std::make_shared<Character>(name, 0, 2, 0, type));
+QModelIndex CharacterController::addToRoster(const QString &name){
+    rosterModel_->appendItem(std::make_shared<Character>(name, 0, 2, 0, Cyrus::CharacterType::Unset));
     isRosterModified_ = true;
     return rosterModel_->index(rosterModel_->rowCount() - 1, 0);
 }

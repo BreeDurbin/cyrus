@@ -24,7 +24,8 @@ namespace Cyrus {
         Fighter,
         Monster,
         Paladin,
-        Wizard
+        Wizard,
+        Unset
     };
 
     enum class ActionType {

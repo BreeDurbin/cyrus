@@ -29,11 +29,17 @@ class Character
     public:
 
     Character();
+
+    // constructor used for inline add (sentinel line) not a normal character
+    Character(QString baseName){
+        if(baseName == QString("_SENTINEL_")) sentinel_ = true;
+    };
+
     Character(QString baseName,
               int initiative,
               AttackRate attackRate,
               int weaponSpeed,
-              Cyrus::CharacterType characterType = Cyrus::CharacterType::Fighter,
+              Cyrus::CharacterType characterType = Cyrus::CharacterType::Unset,
               Cyrus::ActionType actionType = Cyrus::ActionType::Unset,
               Cyrus::Faction faction = Cyrus::Faction::Red);
 
@@ -42,7 +48,7 @@ class Character
               int initiative,
               AttackRate attackRate,
               int weaponSpeed,
-              Cyrus::CharacterType characterType = Cyrus::CharacterType::Fighter,
+              Cyrus::CharacterType characterType = Cyrus::CharacterType::Unset,
               Cyrus::ActionType actionType = Cyrus::ActionType::Unset,
               Cyrus::Faction faction = Cyrus::Faction::Red);
 
@@ -94,13 +100,22 @@ class Character
 
     static void clearNumberCache();
 
+    bool isSentinel() const { return sentinel_; }
+
+    static std::shared_ptr<Character> createSentinel() {
+        auto c = std::make_shared<Character>("_SENTINEL_");
+        c->sentinel_ = true;
+        return c;
+    }
+
+
 protected:
     // local vars
     QUuid uuid_{};
     QString name_{};
     int number_{}; // used if there are more an 1 creature with the same name
     int initiative_{};
-    Cyrus::CharacterType characterType_{Cyrus::CharacterType::Fighter};
+    Cyrus::CharacterType characterType_{Cyrus::CharacterType::Unset};
     Cyrus::ActionType actionType_{Cyrus::ActionType::Unset};
     AttackRate attackRate_{};
     int weaponSpeed_{};
@@ -108,6 +123,7 @@ protected:
     bool hasActed_{false};
     Cyrus::MiscActionType miscActionType_{Cyrus::MiscActionType::Unset};
     int scrollCost_{-1};  // Only valid for MagicScroll
+    bool sentinel_{false};
 
     // cloning struct
     //static map of names and the amount of times they appear
