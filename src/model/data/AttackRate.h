@@ -32,6 +32,12 @@ struct AttackRate {
         return halfAttacks_ / 2;
     }
 
+    // Reverts the last attack() so a cancelled attack doesn't use up the extra
+    // half attack.
+    void undoAttack(){
+        if(halfAttacks_ % 2 != 0) isAttacked_ = !isAttacked_;
+    }
+
     // Add attacks (1.0, 0.5, etc.) with clamping
     void add(int halfAttacks) {
         halfAttacks_ += halfAttacks;

@@ -7,15 +7,6 @@ MiscAction::MiscAction() : Character() {}
 MiscAction::MiscAction(const Character& base)
     : Character(base) {}
 
-MiscAction::MiscAction(const MiscAction& other)
-    : Character(other) {}
-
-MiscAction& MiscAction::operator=(const MiscAction& other) {
-    if (this != &other) {
-        Character::operator=(other);
-    }
-    return *this;
-}
 
 // --- Initiative override ---
 int MiscAction::initiative() const {

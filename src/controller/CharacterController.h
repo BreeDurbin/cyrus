@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QHash>
 #include <QModelIndex>
+#include <QPersistentModelIndex>
 #include "CastState.h"
 #include "Enums.h"
 #include <memory>
@@ -102,6 +103,7 @@ private:
 
     // helpers
     bool progressAction(const QModelIndex& index, const std::shared_ptr<Character> character);
+    void moveActiveOffRows(const QList<QPersistentModelIndex>& removing);
     QModelIndex getNextIndex(const QModelIndex& index, bool isRemoved);
 };
 

@@ -54,42 +54,80 @@ void CharacterController::updateAction(const QModelIndex& index, Cyrus::ActionTy
 void CharacterController::deleteItem(const QModelIndex& index) {
     if (!index.isValid()) return;
 
-    // Advance initiative only if the deleted item is the active one
-    QModelIndex active = initiativeView_->activeIndex();
-    if (active.isValid() && active == index) {
-        advanceInitiative();
-    }
-
-    // if item is a base character kill all child actions
     auto character = initiativeOrderModel_->getItem(index);
     if (!character) return;
-    if(typeid(*character) == typeid(Character)) cancelAction(index);
 
-    initiativeOrderModel_->removeRow(index.row());
+    // Rows shift as cards are removed, so track the target persistently.
+    QPersistentModelIndex target(index);
+
+    // if item is a base character kill all child actions
+    if (typeid(*character) == typeid(Character)) cancelAction(target);
+    if (!target.isValid()) return;
+
+    moveActiveOffRows({target});
+    initiativeOrderModel_->removeRow(target.row());
 }
 
 void CharacterController::cancelAction(const QModelIndex& index) {
     auto character = initiativeOrderModel_->getItem(index);
     if (!character) return;
+    // Only base characters own action cards.
+    if (typeid(*character) != typeid(Character)) return;
 
     // 1. Reset acted state
     character->setActed(false);
 
-    // 2. Remove any dependent rows (same uuid, not base class)
+    // 2. Collect dependent rows (same uuid, not base class). Scan the whole
+    // order: a card can tie its owner's initiative and sort above it.
     const QUuid targetUuid = character->uuid();
+    QList<QPersistentModelIndex> cards;
+    bool removedAttack = false;
 
-    // We need to iterate backwards so row removals don’t invalidate subsequent indexes.
-    for (int row = initiativeOrderModel_->rowCount() - 1; row > index.row(); --row) {
+    for (int row = 0; row < initiativeOrderModel_->rowCount(); ++row) {
         QModelIndex idx = initiativeOrderModel_->index(row, 0);
         auto other = initiativeOrderModel_->getItem(idx);
 
-        if (other && other->uuid() == targetUuid) {
-            // Compare dynamic type to base character type
-            if (typeid(*other) != typeid(*character)) {
-                deleteItem(idx);
-            }
+        if (other && other->uuid() == targetUuid && typeid(*other) != typeid(Character)) {
+            if (std::dynamic_pointer_cast<AttackAction>(other)) removedAttack = true;
+            cards << QPersistentModelIndex(idx);
         }
     }
+
+    moveActiveOffRows(cards);
+
+    // Remove from the bottom up so earlier rows don't shift.
+    std::sort(cards.begin(), cards.end(),
+              [](const QPersistentModelIndex& a, const QPersistentModelIndex& b) { return a.row() > b.row(); });
+    for (const auto& card : cards) {
+        initiativeOrderModel_->removeRow(card.row());
+    }
+
+    // Give back the half attack the cancelled attack used.
+    if (removedAttack) {
+        AttackRate attackRate = character->attackRate();
+        attackRate.undoAttack();
+        character->setAttackRate(attackRate);
+    }
+}
+
+// If the active row is about to be removed, hand the turn to the next row that
+// stays, without logging it: the removed creature or card never acted.
+void CharacterController::moveActiveOffRows(const QList<QPersistentModelIndex>& removing) {
+    if (!initiativeView_->hasActiveIndex()) return;
+    const QModelIndex active = initiativeView_->activeIndex();
+    if (!removing.contains(QPersistentModelIndex(active))) return;
+
+    const int rowCount = initiativeOrderModel_->rowCount();
+    for (int offset = 1; offset < rowCount; ++offset) {
+        QModelIndex candidate = initiativeOrderModel_->index((active.row() + offset) % rowCount, 0);
+        if (removing.contains(QPersistentModelIndex(candidate))) continue;
+
+        initiativeView_->setActiveIndex(candidate);
+        initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(candidate)->initiative());
+        emit currentInitiativeChanged(candidate);
+        return;
+    }
+    // Nothing left after the removal: the active index goes invalid with its row.
 }
 
 void CharacterController::decrementInitiative(const QModelIndex& index) {
@@ -236,9 +274,15 @@ void CharacterController::incrementWeaponSpeed(const QModelIndex& index){
 
 void CharacterController::attackSubmitted(const QModelIndex& index) {
     auto character = initiativeOrderModel_->getItem(index);
-    auto attackRate = character->attackRate();
+    if (!character) return;
 
-    for (int i = 1; i <= attackRate.attack(); ++i) {
+    // attack() alternates the extra half attack each time it is called, so call it
+    // once and store the updated rate back on the character.
+    AttackRate attackRate = character->attackRate();
+    const int attacks = attackRate.attack();
+    character->setAttackRate(attackRate);
+
+    for (int i = 1; i <= attacks; ++i) {
         qDebug() << "Handling attack Submitted for character " << character->name() << " setting attack number " << i;
         auto attack = std::make_shared<AttackAction>(*character, i);
         qDebug() << "name: " << attack->name() << " attackNumber " << attack->attackNumber() << " weapon speed " << attack->weaponSpeed();
@@ -511,7 +555,6 @@ QModelIndex CharacterController::loadRoster(const std::string& roster) {
 
 void CharacterController::clearInitiativeOrder(){
     initiativeOrderModel_->clear();
-    initiativeOrderModel_->roundUpdate(1);
 }
 
 void CharacterController::clearCombatLog(){

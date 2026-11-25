@@ -46,9 +46,9 @@ signals:
     void roundUpdate(int round);
 
 private:
+    // Rows are looked up by scanning items_; encounters are small, and derived
+    // lookup tables went stale on sort/clear and when a character changed faction.
     QVector<std::shared_ptr<Character>> items_;
-    QHash<std::shared_ptr<Character>, int> rowMap_;
-    QMultiHash<Cyrus::Faction, std::shared_ptr<Character>> factionMap_;
 
     int initiative_ = 0;
     int round_   = 1;

@@ -8,8 +8,6 @@ class MiscAction : public Character {
 public:
     MiscAction();
     MiscAction(const Character& base);
-    MiscAction(const MiscAction& other);
-    MiscAction& operator=(const MiscAction& other);
 
     // --- Overrides ---
     int initiative() const override;

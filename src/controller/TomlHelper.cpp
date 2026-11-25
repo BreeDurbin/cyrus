@@ -2,6 +2,7 @@
 #include <fstream>
 #include "Enums.h"
 #include "toml++/toml.h"
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include "Character.h"
@@ -19,7 +20,7 @@ void TomlHelper::saveRepository(const std::string& filename,
             {"baseName",    character->baseName().toStdString()},
             {"class",       static_cast<int>(character->characterType())},
             {"weaponSpeed", character->weaponSpeed()},
-            {"attackRate",  character->attackRate().attack()},
+            {"halfAttacks", character->attackRate().halfAttacks_},
             {"faction",     static_cast<int>(character->faction())}
         });
     }
@@ -50,13 +51,15 @@ QVector<std::shared_ptr<Character>> TomlHelper::loadRepository(const std::string
                 QString baseName = QString::fromStdString(characterTable["baseName"].value_or(""));;
                 int classInt = characterTable["class"].value_or(0);
                 int weaponSpeed = characterTable["weaponSpeed"].value_or(0);
-                int attackRateValue = characterTable["attackRate"].value_or(2); // default to 2 half attacks if missing
                 int factionInt = characterTable["faction"].value_or(0); // default to red faction
-                AttackRate attackRate{attackRateValue};
 
-                // Load UUID
-                QString uuidStr = QString::fromStdString(characterTable["uuid"].value_or(""));
-                QUuid uuid = uuidStr.isNull() ? QUuid::createUuid() : QUuid(uuidStr);
+                // Attack rate in half attacks (3 = 3/2 attacks/round)
+                int halfAttacks = characterTable["halfAttacks"].value_or(2); // default to 1 attack/round if missing
+                AttackRate attackRate{std::clamp(halfAttacks, 2, 20)};
+
+                // Load UUID, generating one if it is missing or unreadable
+                QUuid uuid(QString::fromStdString(characterTable["uuid"].value_or("")));
+                if (uuid.isNull()) uuid = QUuid::createUuid();
 
                 characters.push_back(std::make_shared<Character>(
                     uuid,

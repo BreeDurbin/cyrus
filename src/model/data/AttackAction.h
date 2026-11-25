@@ -22,15 +22,6 @@ class AttackAction : public Character {
           : Character(base),
             attackNumber_{attackNumber} {}
 
-    AttackAction(const AttackAction& other) : Character(other) {}
-
-    AttackAction& operator=(const AttackAction& other) {
-        if (this != &other) {
-            Character::operator=(other);
-        }
-        return *this;
-    }
-
     int initiative() const override {
         if (attackNumber_ <= 0) return initiative_;
         return initiative_ + (attackNumber_ * weaponSpeed_);

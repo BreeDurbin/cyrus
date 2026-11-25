@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(CYRUS_STANDALONE "Build against the headless Qt vendored in third_party/qt6 instead of the system Qt" OFF)
+option(CYRUS_BUILD_TESTS "Build the Catch2 unit tests for the model and controller layers" ON)
 
 include(cmake/dependencies.cmake)
 
@@ -14,3 +15,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 add_subdirectory(asset)
 add_subdirectory(src)
+
+if(CYRUS_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
