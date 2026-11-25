@@ -43,20 +43,41 @@ Dependencies:
 ```
 make
 cmake 3.28.3
-qt6.9
+C++20 compiler (GCC 13+)
+qt6 (system install, 6.7 or newer) -- not needed for a standalone build
 ```
+toml++ is vendored in `third_party/`, so no network access is needed to build.
+
 Build Guide:
 
-To build:
+There are two build modes:
+
+- **Default** -- builds against the Qt installed on your system. Use this to run Cyrus on your desktop.
+- **Standalone** -- builds against the headless Qt vendored in `third_party/qt6` (Qt 6.7.3, no system dependencies beyond libc/libstdc++). Use this on machines without Qt, such as a bare Ubuntu 24.04 box or CI. It has no desktop window support: Cyrus runs on the `offscreen` platform by default, or set `QT_QPA_PLATFORM=vnc` and connect a VNC viewer to port 5900 to see it.
+
+Quick build with the helper script:
 ```
-# make build directory if doesn't already exist
-mkdir build
-cd build
-# generate cmake files
-cmake ..
+# default (system Qt), output in build/
+./build.sh
+# standalone (vendored headless Qt), output in build-standalone/
+./build.sh --standalone
+```
+
+Or run the cmake steps yourself:
+```
+# generate cmake files (default, system Qt)
+cmake -S . -B build
 # compile
-make
+cmake --build build --parallel
+
+# generate cmake files (standalone, vendored headless Qt)
+cmake -S . -B build-standalone -DCYRUS_STANDALONE=ON
+# compile
+cmake --build build-standalone --parallel
 ```
+Use a separate build directory for each mode; cmake will stop with an error if you switch modes in an existing one.
+
+To use a system Qt in a non-standard location, pass its prefix when generating, e.g. `cmake -S . -B build -DCMAKE_PREFIX_PATH=/opt/qt/6.9.0/gcc_64`.
 
 ## Project Trello Board:
 [Located Here](https://trello.com/invite/b/68bbd304d3e025eda942d0c7/ATTI93e6d614c5540b3da8ed7a33a41a0e6689DAEC3A/project-cyrus)

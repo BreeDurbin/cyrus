@@ -5,6 +5,8 @@ project(cyrus VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(CYRUS_STANDALONE "Build against the headless Qt vendored in third_party/qt6 instead of the system Qt" OFF)
+
 include(cmake/dependencies.cmake)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

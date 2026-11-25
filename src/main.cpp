@@ -14,6 +14,14 @@ int main(int argc, char* argv[])
     qRegisterMetaType<std::shared_ptr<Character>>("std::shared_ptr<Character>");
     qRegisterMetaType<std::weak_ptr<Character>>("std::weak_ptr<Character>");
     
+#ifdef CYRUS_STANDALONE
+    // The standalone Qt has no xcb/wayland plugin; default to offscreen unless
+    // the caller picked a platform (e.g. QT_QPA_PLATFORM=vnc).
+    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+    }
+#endif
+
     QApplication *a = new QApplication(argc, argv);
     QGuiApplication::setDesktopFileName("org.cyrus.Cyrus");
     

@@ -32,4 +32,8 @@ target_link_libraries(
         asset
 )
 
+if(CYRUS_STANDALONE)
+    target_compile_definitions(cyrus PRIVATE CYRUS_STANDALONE)
+endif()
+
 

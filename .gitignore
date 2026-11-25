@@ -1,1 +1,3 @@
 build/*
+build-standalone/
+third_party/qt-everywhere-src-*/
