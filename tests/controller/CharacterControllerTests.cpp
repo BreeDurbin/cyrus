@@ -9,6 +9,7 @@
 #include "AttackAction.h"
 #include "CastAction.h"
 #include "MiscAction.h"
+#include "RemovalEntry.h"
 #include "TomlHelper.h"
 
 using namespace Cyrus;
@@ -605,8 +606,9 @@ TEST_CASE_METHOD(ControllerFixture, "Deleting the active character hands the tur
     CHECK(active() == ragnar);
     CHECK(initiative.data(row(0), InitiativeRole).toInt() == 5);
     CHECK_FALSE(changedRows.isEmpty());
-    // The deleted creature never acted, so nothing is logged.
-    CHECK(combatLog.rowCount() == 0);
+    // The deleted creature never acted: only its removal is logged, not a turn.
+    REQUIRE(combatLog.rowCount() == 1);
+    CHECK(combatLog.getItems().first()->combatLog() == QString("Orc was removed from combat."));
 }
 
 TEST_CASE_METHOD(ControllerFixture, "Deleting the last active row wraps the turn to the top", "[controller][delete]") {
@@ -725,6 +727,81 @@ TEST_CASE_METHOD(ControllerFixture, "Deleting the active attack card removes onl
     CHECK(initiative.getItems() == QVector<std::shared_ptr<Character>>{orc, guard});
 }
 
+TEST_CASE_METHOD(ControllerFixture, "Deleting a creature logs its removal", "[controller][delete]") {
+    auto orc = makeCharacter("Orc", 2, Faction::Red);
+    auto ragnar = makeCharacter("Ragnar", 5, Faction::Blue);
+    startCombat({orc, ragnar});
+    combatLog.appendItem(orc); // an earlier turn
+
+    int scrollRequests = 0;
+    QObject::connect(&controller, &CharacterController::requestScrollCombatLogToBottom,
+                     [&] { ++scrollRequests; });
+
+    controller.deleteItem(row(1));
+
+    REQUIRE(combatLog.rowCount() == 2);
+    auto entry = std::dynamic_pointer_cast<RemovalEntry>(combatLog.getItems().last());
+    REQUIRE(entry);
+    CHECK(entry->combatLog() == QString("Ragnar was removed from combat."));
+    CHECK(entry->uuid() == ragnar->uuid());
+    CHECK(entry->characterType() == ragnar->characterType()); // log shows the class icon
+    CHECK(scrollRequests == 1);
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Deleting a numbered creature logs its numbered name", "[controller][delete]") {
+    auto goblin1 = makeCharacter("Goblin", 2);
+    auto goblin2 = makeCharacter("Goblin", 4);
+    startCombat({goblin1, goblin2});
+
+    controller.deleteItem(row(1));
+
+    REQUIRE(combatLog.rowCount() == 1);
+    CHECK(combatLog.getItems().first()->combatLog() == QString("Goblin 2 was removed from combat."));
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Deleting a creature with pending cards logs one removal", "[controller][delete]") {
+    auto ragnar = makeCharacter("Ragnar", 3, Faction::Blue, 4, 4);
+    auto orc = makeCharacter("Orc", 9);
+    initiative.addItems({ragnar, orc});
+    controller.attackSubmitted(row(0));
+    controller.setSpellName(ragnar->uuid(), "Shield");
+    controller.castSubmitted(ragnar->uuid(), ragnar);
+    REQUIRE(initiative.rowCount() == 5);
+
+    controller.deleteItem(initiative.indexFromCharacter(ragnar));
+
+    REQUIRE(combatLog.rowCount() == 1);
+    CHECK(combatLog.getItems().first()->combatLog() == QString("Ragnar was removed from combat."));
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Deleting an action card does not log a removal", "[controller][delete]") {
+    auto ragnar = makeCharacter("Ragnar", 3, Faction::Blue, 2, 4);
+    auto orc = makeCharacter("Orc", 9);
+    initiative.addItems({ragnar, orc});
+    controller.attackSubmitted(row(0));
+    REQUIRE(initiative.rowCount() == 3);
+
+    int scrollRequests = 0;
+    QObject::connect(&controller, &CharacterController::requestScrollCombatLogToBottom,
+                     [&] { ++scrollRequests; });
+
+    controller.deleteItem(row(initiative.rowCount() - 1)); // the attack card
+
+    CHECK(initiative.rowCount() == 2);
+    CHECK(combatLog.rowCount() == 0);
+    CHECK(scrollRequests == 0);
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Deleting nothing logs nothing", "[controller][delete]") {
+    initiative.appendItem(makeCharacter("Orc", 2));
+
+    controller.deleteItem(QModelIndex());
+    controller.deleteItem(row(5));
+
+    CHECK(initiative.rowCount() == 1);
+    CHECK(combatLog.rowCount() == 0);
+}
+
 TEST_CASE_METHOD(ControllerFixture, "Clearing the initiative order resets the round", "[controller][delete]") {
     startCombat({makeCharacter("Orc", 2)});
     combatLog.appendItem(makeCharacter("Ragnar", 5));
@@ -736,6 +813,7 @@ TEST_CASE_METHOD(ControllerFixture, "Clearing the initiative order resets the ro
     controller.clearInitiativeOrder();
     CHECK(initiative.rowCount() == 0);
     CHECK(roundTexts == QStringList{"Round: 1"});
+    CHECK(combatLog.rowCount() == 1); // clearing is not a per-creature removal
 
     controller.clearCombatLog();
     CHECK(combatLog.rowCount() == 0);

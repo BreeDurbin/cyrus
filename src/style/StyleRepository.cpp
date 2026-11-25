@@ -221,6 +221,41 @@ QString StyleRepository::lineEdit() {
 }
 
 
+QString StyleRepository::tabWidget() {
+    return QString(R"(
+        /* Tabs run down the left edge (West), text rotated to read vertically. */
+        QTabWidget::pane {
+            border: none;
+            border-left: 1px solid %1;
+            background: transparent;
+        }
+
+        QTabBar::tab {
+            background: transparent;
+            color: %2;
+            font-family: "%3";
+            font-size: 20px;
+            padding: 18px 4px;
+            border: none;
+            border-right: 2px solid transparent;
+        }
+
+        QTabBar::tab:hover {
+            color: %4;
+        }
+
+        QTabBar::tab:selected {
+            color: %4;
+            border-right: 2px solid %5;
+        }
+    )")
+        .arg(cssColor(ColorRepository::baseBackground()))      // %1 pane divider
+        .arg(cssColor(ColorRepository::hoverTextColor()))      // %2 tab text
+        .arg(StyleRepository::titleFontFamily())               // %3 tab font
+        .arg(cssColor(ColorRepository::text()))                // %4 hover/selected text
+        .arg(cssColor(ColorRepository::buttonOutlineColor())); // %5 selected underline
+}
+
 QString StyleRepository::titleFontFamily() {
     static QString family = [] {
         int id = QFontDatabase::addApplicationFont(":/font/Black_Chancery.ttf");

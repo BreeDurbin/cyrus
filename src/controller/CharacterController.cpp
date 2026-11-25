@@ -11,6 +11,7 @@
 #include <QTimer>
 #include "AttackAction.h"
 #include "MiscAction.h"
+#include "RemovalEntry.h"
 #include <algorithm>
 
 CharacterController::CharacterController(InitiativeView* initiativeView,
@@ -61,11 +62,18 @@ void CharacterController::deleteItem(const QModelIndex& index) {
     QPersistentModelIndex target(index);
 
     // if item is a base character kill all child actions
-    if (typeid(*character) == typeid(Character)) cancelAction(target);
+    const bool isCreature = typeid(*character) == typeid(Character);
+    if (isCreature) cancelAction(target);
     if (!target.isValid()) return;
 
     moveActiveOffRows({target});
     initiativeOrderModel_->removeRow(target.row());
+
+    // Removing a creature (not just one of its action cards) is logged.
+    if (isCreature) {
+        combatLogModel_->appendItem(std::make_shared<RemovalEntry>(*character));
+        emit requestScrollCombatLogToBottom();
+    }
 }
 
 void CharacterController::cancelAction(const QModelIndex& index) {

@@ -3,6 +3,7 @@
 #include "AttackAction.h"
 #include "CastAction.h"
 #include "MiscAction.h"
+#include "RemovalEntry.h"
 
 using namespace Cyrus;
 using TestHelpers::makeCharacter;
@@ -179,4 +180,23 @@ TEST_CASE("MiscAction text describes the item used", "[model][MiscAction]") {
         CHECK(action.text() == text);
         CHECK(action.combatLog() == text);
     }
+}
+
+// ---- RemovalEntry ----
+
+TEST_CASE("RemovalEntry logs that the creature was removed", "[model][RemovalEntry]") {
+    auto orc = makeCharacter("Orc", 7, Faction::Red);
+    RemovalEntry entry(*orc);
+
+    CHECK(entry.combatLog() == QString("Orc was removed from combat."));
+    CHECK(entry.text() == entry.combatLog());
+    CHECK(entry.uuid() == orc->uuid());
+    CHECK(entry.characterType() == orc->characterType());
+    CHECK(entry.faction() == Faction::Red);
+}
+
+TEST_CASE("RemovalEntry uses the numbered name", "[model][RemovalEntry]") {
+    auto first = makeCharacter("Goblin", 1);
+    auto second = makeCharacter("Goblin", 1);
+    CHECK(RemovalEntry(*second).combatLog() == QString("Goblin 2 was removed from combat."));
 }

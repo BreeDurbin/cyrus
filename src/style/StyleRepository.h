@@ -14,6 +14,7 @@ namespace StyleRepository
     QString pushButton();
     QString iconPushButton();
     QString lineEdit();
+    QString tabWidget();
 
     QString titleFontFamily();
     QFont titleFont(int pointSize = 12, bool bold = false);

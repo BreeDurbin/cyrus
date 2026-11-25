@@ -8,6 +8,8 @@ add_library(model STATIC
     data/CastAction.h
     data/MiscAction.cpp
     data/MiscAction.h
+    data/RemovalEntry.cpp
+    data/RemovalEntry.h
     CharacterModel.cpp
     CharacterModel.h
     RosterModel.cpp

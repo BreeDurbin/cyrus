@@ -44,6 +44,7 @@ private:
     // UI-only setup helpers
     void setupMainDialog();
     void setupHeroFrame();
+    void setupTabs();
     void setupLabels();
     void setupButtons();
     void setupComboBoxes();

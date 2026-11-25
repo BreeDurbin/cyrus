@@ -177,17 +177,21 @@ void RosterDelegate::updateEditorGeometry(QWidget* editor,
 
         editor->setGeometry(sentinelLayout->mainRowRect);
 
-        // Now position children relative to editor
+        // Now position children relative to editor. The layout rects are in
+        // viewport coordinates, so shift them by the editor's own position.
+        const QPoint editorOrigin = sentinelLayout->mainRowRect.topLeft();
         if (auto* container = qobject_cast<SentinelEditor*>(editor)) {
             // line edit
-            qDebug() << "  setting lineEdit geometry to" << sentinelLayout->lineEditFrame;
+            const QRect lineEditRect = sentinelLayout->lineEditFrame.translated(-editorOrigin);
+            qDebug() << "  setting lineEdit geometry to" << lineEditRect;
             auto lineEdit = container->lineEdit();
-            lineEdit->setGeometry(sentinelLayout->lineEditFrame);
+            lineEdit->setGeometry(lineEditRect);
 
             // button
+            const QRect buttonRect = sentinelLayout->buttonFrame.translated(-editorOrigin);
             auto button = container->addButton();
-            qDebug() << "  setting button geometry to" << sentinelLayout->buttonFrame;
-            button->setGeometry(sentinelLayout->buttonFrame);
+            qDebug() << "  setting button geometry to" << buttonRect;
+            button->setGeometry(buttonRect);
             button->setIconSize(button->size());
         }
     }

@@ -4,7 +4,7 @@
 #include <QAbstractItemDelegate>
 #include <QLineEdit>
 #include <QDebug>
-#include "InitiativeDelegate.h"
+#include "RosterDelegate.h"
 
 QStyleOptionViewItem RosterView::makeViewOptions() const {
     QStyleOptionViewItem option;
@@ -30,6 +30,12 @@ bool RosterView::editCustom(const QModelIndex& index) {
         return false;
     }
 
+    // Only one inline add editor at a time
+    if (sentinelEditor_) {
+        sentinelEditor_->setFocus();
+        return true;
+    }
+
     // Step 1: prepare style option
     QStyleOptionViewItem option = this->makeViewOptions();
     option.rect = visualRect(index);
@@ -48,9 +54,9 @@ bool RosterView::editCustom(const QModelIndex& index) {
     itemDelegate()->setEditorData(editor, index);
 
     // Step 4: place it
-    itemDelegate()->updateEditorGeometry(editor, option, index);
+    placeEditor(editor, index);
+    sentinelEditor_ = editor;
 
-    // this does not show if the row index is > 0
     editor->show();
     editor->setFocus();
 
@@ -82,11 +88,19 @@ void RosterView::setItemDelegate(QAbstractItemDelegate* delegate) {
     }
 }
 
+QModelIndex RosterView::indexForEditor(QWidget* editor) const {
+    // The only custom editor is the inline add editor, which belongs to the
+    // sentinel row (always the last row).
+    if (!editor || editor != sentinelEditor_ || !model() || model()->rowCount() == 0)
+        return QModelIndex();
+    return model()->index(model()->rowCount() - 1, 0);
+}
+
 void RosterView::onCommitData(QWidget* editor) {
-    auto* d = qobject_cast<InitiativeDelegate*>(itemDelegate());
+    auto* d = qobject_cast<RosterDelegate*>(itemDelegate());
     if (!d) return;
 
-    QModelIndex idx = d->indexForEditor(editor);
+    QModelIndex idx = indexForEditor(editor);
     if (!idx.isValid()) {
         qDebug() << "CommitData: editor has no index mapping";
         return;
@@ -96,6 +110,24 @@ void RosterView::onCommitData(QWidget* editor) {
 }
 
 void RosterView::onCloseEditor(QWidget* editor) {
+    if (editor == sentinelEditor_) sentinelEditor_.clear();
     editor->deleteLater();
     viewport()->update();
+}
+
+void RosterView::updateEditorGeometries() {
+    QListView::updateEditorGeometries();
+
+    // Rows were added/removed or the view resized: move the inline add editor to
+    // the sentinel row, which is always the last row.
+    if (sentinelEditor_ && model() && model()->rowCount() > 0) {
+        placeEditor(sentinelEditor_, model()->index(model()->rowCount() - 1, 0));
+    }
+}
+
+void RosterView::placeEditor(QWidget* editor, const QModelIndex& index) {
+    QStyleOptionViewItem option = makeViewOptions();
+    option.rect = visualRect(index);
+    option.state |= QStyle::State_Enabled | QStyle::State_Active;
+    itemDelegate()->updateEditorGeometry(editor, option, index);
 }

@@ -7,10 +7,10 @@
 #include <QTextEdit>
 #include <QStringListModel>
 #include <QHBoxLayout>
+#include <QTabBar>
 #include "Enums.h"
 #include <QVector>
 #include <QShortcut>
-#include "RosterLayoutEngine.h"
 #include "CharacterLayoutEngine.h"
 #include "CombatLogLayoutEngine.h"
 #include "CastAction.h"
@@ -58,6 +58,7 @@ CyrusDialog::CyrusDialog(QWidget *parent)
 
     //Configure styling
     setupHeroFrame();
+    setupTabs();
     setupLabels();
     setupButtons();
     setupComboBoxes();
@@ -79,6 +80,16 @@ CyrusDialog::~CyrusDialog()
 
 void CyrusDialog::setupMainDialog() {
 
+    // Styles change fonts, padding and therefore minimum sizes, so apply the
+    // window style and polish every child before measuring anything. Layouts
+    // cache their size hints, so drop those caches after polishing.
+    setWindowIcon(IconRepository::miniCyrus_icon());
+    setStyleSheet(StyleRepository::mainWindow());
+    ensurePolished();
+    for (QLayout* l : findChildren<QLayout*>()) {
+        l->invalidate();
+    }
+
     //setup QFrame widgets so they report minimum width:
 
     // Compute minimum width from all children inside initiativeFrame
@@ -91,14 +102,28 @@ void CyrusDialog::setupMainDialog() {
     ui->heroFrame->setMinimumWidth(minHeroWidth);
     ui->heroFrame->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
 
+    // Tab widget: the tabs run down the left edge, so the tab bar (plus the tab
+    // widget's frame) adds to the combat panel's width, and the taller of the
+    // tab bar and the panel sets the height.
+    const QSize minTabsSize = ui->mainTabWidget->minimumSizeHint();
+    const int tabsExtraWidth = minTabsSize.width() - minInitiativeWidth;
+    qDebug() << "Tab bar size" << ui->mainTabWidget->tabBar()->sizeHint()
+             << "adds" << tabsExtraWidth << "to the width";
+
+    const int minWidth = minInitiativeWidth + tabsExtraWidth + minHeroWidth + layout()->spacing();
+
+    // The hero frame sits above the tab widget, so their heights stack.
+    const QMargins margins = ui->centralwidget->layout()->contentsMargins();
+    const int minHeight = ui->heroFrame->minimumHeight()
+                          + ui->centralwidget->layout()->spacing()
+                          + minTabsSize.height()
+                          + margins.top() + margins.bottom();
+
     // Then update central widget and main window
-    qDebug() << "Setting main dialog width " << minInitiativeWidth + minHeroWidth + layout()->spacing();
-    ui->centralwidget->setMinimumWidth(minInitiativeWidth + minHeroWidth + layout()->spacing());
+    qDebug() << "Setting main dialog minimum size" << minWidth << "x" << minHeight;
+    ui->centralwidget->setMinimumSize(minWidth, minHeight);
     setMinimumSize(ui->centralwidget->minimumSize());
 
-
-    setWindowIcon(IconRepository::miniCyrus_icon());
-    setStyleSheet(StyleRepository::mainWindow());
     layout()->activate();
 
     qDebug() << "Dumping widget sizes: ";
@@ -135,6 +160,11 @@ void CyrusDialog::setupHeroFrame() {
     ui->heroFrame->setFixedHeight(bg.height());  // lock vertical size
     ui->heroFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     ui->heroFrame->setStyleSheet(StyleRepository::hero());
+}
+
+void CyrusDialog::setupTabs() {
+    ui->mainTabWidget->setStyleSheet(StyleRepository::tabWidget());
+    ui->mainTabWidget->setCurrentWidget(ui->combatTab);
 }
 
 void CyrusDialog::setupLabels() {
@@ -218,10 +248,6 @@ void CyrusDialog::setupItemViews(){
 
     // Roster
     {
-        RosterLayoutEngine engine;
-        const int rosterWidth = engine.minimumWidth(dummy);
-        qDebug() << "Setting roster Item View width to: " << rosterWidth;
-        ui->initiativeOrder->setMinimumWidth(rosterWidth);
         ui->roster->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
         ui->roster->setStyleSheet(StyleRepository::itemView());
@@ -229,6 +255,19 @@ void CyrusDialog::setupItemViews(){
         ui->roster->setFocusPolicy(Qt::NoFocus);
         ui->roster->setItemDelegate(rosterDelegate_);
         ui->roster->setMouseTracking(true);
+
+        // The sentinel (inline add) row is always present, so its width sets the
+        // roster's minimum. Add the view's frame (border + padding from the
+        // stylesheet, so polish first) and room for the vertical scrollbar, so a
+        // long roster never needs to scroll sideways.
+        ui->roster->ensurePolished();
+        const QModelIndex sentinel = ui->roster->model()->index(ui->roster->model()->rowCount() - 1, 0);
+        const int sentinelWidth = rosterDelegate_->sizeHint(ui->roster->makeViewOptions(), sentinel).width();
+        const int rosterWidth = sentinelWidth
+                                + 2 * ui->roster->frameWidth()
+                                + ui->roster->verticalScrollBar()->sizeHint().width();
+        qDebug() << "Setting roster Item View width to: " << rosterWidth;
+        ui->roster->setMinimumWidth(rosterWidth);
     }
 
     // Initiative Order
