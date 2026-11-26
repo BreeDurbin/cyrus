@@ -20,6 +20,10 @@ int main(int argc, char* argv[])
     if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
+    // Without fontconfig Qt looks for fonts in <qt>/lib/fonts, which doesn't exist.
+    if (qEnvironmentVariableIsEmpty("QT_QPA_FONTDIR")) {
+        qputenv("QT_QPA_FONTDIR", CYRUS_FONT_DIR);
+    }
 #endif
 
     QApplication *a = new QApplication(argc, argv);
