@@ -22,7 +22,6 @@ QString StyleRepository::hero() {
             background-image: url(:/image/CYRUS_HERO.png);
             background-position: left;
             background-repeat: no-repeat;
-            background-size: cover;   /* scale to cover entire frame */
         }
     )");
 }

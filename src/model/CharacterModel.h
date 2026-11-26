@@ -36,9 +36,10 @@ public:
     void removeItem(const QModelIndex& index);
     void clear();
 
-    // Initiative/segment control
-    void advanceInitiative(int initiative);
-    void backtrackInitiative(int initiative);
+    // Initiative/segment control. The controller decides when a round starts or
+    // ends (the turn wrapping past the last row); the segment alone can't tell,
+    // since everyone may share one initiative.
+    void setCurrentInitiative(int initiative);
     void advanceRound();
     void backtrackRound();
 

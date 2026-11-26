@@ -33,7 +33,13 @@ target_link_libraries(
 )
 
 if(CYRUS_STANDALONE)
-    target_compile_definitions(cyrus PRIVATE CYRUS_STANDALONE)
+    # The vendored Qt has no fontconfig, so point it at our bundled fonts.
+    target_compile_definitions(
+        cyrus
+        PRIVATE
+            CYRUS_STANDALONE
+            CYRUS_FONT_DIR="${CMAKE_SOURCE_DIR}/asset/font"
+    )
 endif()
 
 

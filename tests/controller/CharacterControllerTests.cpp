@@ -40,7 +40,7 @@ struct ControllerFixture {
     void startCombat(const QVector<std::shared_ptr<Character>>& characters) {
         initiative.addItems(characters);
         view.setActiveIndex(row(0));
-        initiative.advanceInitiative(characters.first()->initiative());
+        initiative.setCurrentInitiative(characters.first()->initiative());
     }
 
     std::shared_ptr<Character> active() const {
@@ -473,6 +473,78 @@ TEST_CASE_METHOD(ControllerFixture, "Advancing past the last row wraps into the 
     CHECK(active() == orc);
     CHECK(roundTexts == QStringList{"Round: 2"});
     CHECK(combatLog.rowCount() == 2);
+}
+
+// Regression: rounds used to be detected by the initiative going down, so they
+// never advanced when everyone shared an initiative.
+TEST_CASE_METHOD(ControllerFixture, "Rounds advance on the wrap even when initiatives are equal", "[controller][advance]") {
+    auto orc = makeCharacter("Orc", 1);
+    auto ragnar = makeCharacter("Ragnar", 1);
+    startCombat({orc, ragnar});
+
+    QStringList roundTexts;
+    QObject::connect(&controller, &CharacterController::roundChangedText,
+                     [&](const QString& t) { roundTexts << t; });
+
+    ragnar->setActed(true);
+    controller.advanceInitiative();
+    CHECK(roundTexts.isEmpty());
+
+    controller.advanceInitiative();
+    CHECK(roundTexts == QStringList{"Round: 2"});
+    CHECK_FALSE(ragnar->hasActed());
+
+    controller.advanceInitiative();
+    controller.advanceInitiative();
+    CHECK(roundTexts == QStringList{"Round: 2", "Round: 3"});
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Each turn of a lone combatant is a new round", "[controller][advance]") {
+    startCombat({makeCharacter("Orc", 3)});
+
+    QStringList roundTexts;
+    QObject::connect(&controller, &CharacterController::roundChangedText,
+                     [&](const QString& t) { roundTexts << t; });
+
+    controller.advanceInitiative();
+    controller.advanceInitiative();
+    CHECK(roundTexts == QStringList{"Round: 2", "Round: 3"});
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Backtracking past the top goes back a round even when initiatives are equal", "[controller][advance]") {
+    auto orc = makeCharacter("Orc", 1);
+    auto ragnar = makeCharacter("Ragnar", 1);
+    startCombat({orc, ragnar});
+    controller.advanceInitiative();
+    controller.advanceInitiative(); // round 2, back on the first row
+
+    QStringList roundTexts;
+    QObject::connect(&controller, &CharacterController::roundChangedText,
+                     [&](const QString& t) { roundTexts << t; });
+
+    controller.backtrackInitiative();
+    CHECK(roundTexts == QStringList{"Round: 1"});
+    CHECK(view.activeIndex().row() == 1);
+
+    // Moving back within the round leaves it alone.
+    controller.backtrackInitiative();
+    CHECK(roundTexts == QStringList{"Round: 1"});
+}
+
+TEST_CASE_METHOD(ControllerFixture, "Deleting the last active row starts a new round when initiatives are equal", "[controller][delete]") {
+    auto orc = makeCharacter("Orc", 1);
+    auto ragnar = makeCharacter("Ragnar", 1);
+    startCombat({orc, ragnar});
+    controller.advanceInitiative();
+    REQUIRE(view.activeIndex().row() == 1);
+
+    QStringList roundTexts;
+    QObject::connect(&controller, &CharacterController::roundChangedText,
+                     [&](const QString& t) { roundTexts << t; });
+
+    controller.deleteItem(row(1));
+    CHECK(view.activeIndex().row() == 0);
+    CHECK(roundTexts == QStringList{"Round: 2"});
 }
 
 TEST_CASE_METHOD(ControllerFixture, "Attack cards are removed once they resolve", "[controller][advance]") {

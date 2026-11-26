@@ -167,6 +167,19 @@ void CyrusDialog::setupTabs() {
     ui->mainTabWidget->setCurrentWidget(ui->combatTab);
 }
 
+QList<QPair<QString, QPixmap>> CyrusDialog::grabTabs() {
+    QTabWidget* tabs = ui->mainTabWidget;
+    const int current = tabs->currentIndex();
+    QList<QPair<QString, QPixmap>> grabs;
+    for (int i = 0; i < tabs->count(); ++i) {
+        tabs->setCurrentIndex(i);
+        const QString name = tabs->tabText(i).remove('&').toLower();
+        grabs.append({name, grab()});
+    }
+    tabs->setCurrentIndex(current);
+    return grabs;
+}
+
 void CyrusDialog::setupLabels() {
     ui->participantsLabel->setStyleSheet(StyleRepository::label());
     ui->initiativeOrderLabel->setStyleSheet(StyleRepository::label());
@@ -525,6 +538,11 @@ void CyrusDialog::centerOnCurrentInitiative(const QModelIndex& index) {
     if (index.isValid()) {
         ui->initiativeOrder->scrollTo(index, QAbstractItemView::PositionAtCenter);
     }
+}
+
+void CyrusDialog::selectRoster(const QString& rosterName) {
+    ui->rosterGroupsComboBox->setText(rosterName);
+    onRosterSelectionChanged(rosterName);
 }
 
 void CyrusDialog::onRosterSelectionChanged(const QString& selectedRoster) {
