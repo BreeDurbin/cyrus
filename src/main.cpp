@@ -43,7 +43,8 @@ int main(int argc, char* argv[])
     const QCommandLineOption quitAfterOption("quit-after",
         "Quit with exit code 0 after <ms> milliseconds.", "ms");
     const QCommandLineOption screenshotOption("screenshot",
-        "Save the window as a PNG to <file> when quitting. Quits as soon as the window "
+        "Save the window as a PNG once per tab when quitting, named after <file> and "
+        "the tab (cyrus.png -> cyrus-combat.png, cyrus-creatures.png). Quits as soon as the window "
         "is shown unless --quit-after is given. Exits 1 if the file can't be written.", "file");
     parser.addOptions({workingDirOption, rosterOption, quitAfterOption, screenshotOption});
     parser.process(*a);
@@ -82,11 +83,20 @@ int main(int argc, char* argv[])
 
     if (quitAfterMs >= 0) {
         QTimer::singleShot(quitAfterMs, a, [a, &w, screenshotPath]() {
-            if (!screenshotPath.isEmpty() && !w.grab().save(screenshotPath, "PNG")) {
-                std::cerr << "cyrus: cannot write screenshot '"
-                          << screenshotPath.toStdString() << "'" << std::endl;
-                a->exit(1);
-                return;
+            if (!screenshotPath.isEmpty()) {
+                // One PNG per tab: shots/cyrus.png -> shots/cyrus-combat.png, ...
+                const QFileInfo base(screenshotPath);
+                const QString stem = base.dir().filePath(base.completeBaseName());
+                for (const auto& [tabName, pixmap] : w.grabTabs()) {
+                    const QString path = stem + "-" + tabName + ".png";
+                    if (!pixmap.save(path, "PNG")) {
+                        std::cerr << "cyrus: cannot write screenshot '"
+                                  << path.toStdString() << "'" << std::endl;
+                        a->exit(1);
+                        return;
+                    }
+                    std::cout << "cyrus: saved screenshot " << path.toStdString() << std::endl;
+                }
             }
             a->exit(0);
         });

@@ -127,11 +127,14 @@ void CharacterController::moveActiveOffRows(const QList<QPersistentModelIndex>& 
 
     const int rowCount = initiativeOrderModel_->rowCount();
     for (int offset = 1; offset < rowCount; ++offset) {
-        QModelIndex candidate = initiativeOrderModel_->index((active.row() + offset) % rowCount, 0);
+        const int candidateRow = active.row() + offset;
+        QModelIndex candidate = initiativeOrderModel_->index(candidateRow % rowCount, 0);
         if (removing.contains(QPersistentModelIndex(candidate))) continue;
 
+        // Handing the turn past the last row back to the top starts a new round.
+        if (candidateRow >= rowCount) initiativeOrderModel_->advanceRound();
         initiativeView_->setActiveIndex(candidate);
-        initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(candidate)->initiative());
+        initiativeOrderModel_->setCurrentInitiative(initiativeOrderModel_->getItem(candidate)->initiative());
         emit currentInitiativeChanged(candidate);
         return;
     }
@@ -387,7 +390,7 @@ void CharacterController::addRosterToInitiative() {
         QModelIndex first = initiativeOrderModel_->index(0, 0);
         initiativeView_->setActiveIndex(first);
         // set the starting segment to the initiative of the character first in the order
-        initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(first)->initiative());
+        initiativeOrderModel_->setCurrentInitiative(initiativeOrderModel_->getItem(first)->initiative());
     }
 }
 
@@ -401,7 +404,7 @@ void CharacterController::addRosterMemberToInitiative(const QModelIndex& index) 
             QModelIndex first = initiativeOrderModel_->index(0, 0);
             initiativeView_->setActiveIndex(first);
             // set the starting segment to the initiative of the character first in the order
-            initiativeOrderModel_->advanceInitiative(initiativeOrderModel_->getItem(first)->initiative());
+            initiativeOrderModel_->setCurrentInitiative(initiativeOrderModel_->getItem(first)->initiative());
         }
     }
 }
@@ -451,12 +454,17 @@ void CharacterController::advanceInitiative() {
 
     // --- Compute next active index ---
     QModelIndex nextIndex = getNextIndex(currentIndex, isRemoved);
+    // Wrapping back to the top starts a new round. A removed row's successor
+    // shifts up into its place, so staying on the same row is not a wrap then.
+    const bool wrapped = isRemoved ? nextIndex.row() < currentIndex.row()
+                                   : nextIndex.row() <= currentIndex.row();
 
     // --- If there are any items left, move the active index to next and advance the models current initaitive to the next row --- 
     if (initiativeOrderModel_->rowCount() > 0) {
         auto nextCharacter = initiativeOrderModel_->getItem(nextIndex);
+        if (wrapped) initiativeOrderModel_->advanceRound();
         initiativeView_->setActiveIndex(nextIndex);
-        initiativeOrderModel_->advanceInitiative(nextCharacter->initiative());
+        initiativeOrderModel_->setCurrentInitiative(nextCharacter->initiative());
         emit currentInitiativeChanged(nextIndex);
     }
 
@@ -505,14 +513,16 @@ void CharacterController::backtrackInitiative() {
     
     int previousRow = initiativeView_->activeIndex().row() - 1;
     if (previousRow < 0) {
+        // Backing up past the top of the order returns to the previous round.
         previousRow = initiativeOrderModel_->rowCount() - 1;
+        initiativeOrderModel_->backtrackRound();
     }
 
     QModelIndex previousIndex = initiativeOrderModel_->index(previousRow, 0);
 
     if (std::shared_ptr<Character> character = initiativeOrderModel_->getItem(previousIndex)) {
         // Backtrack initiative segment
-        initiativeOrderModel_->backtrackInitiative(character->initiative());
+        initiativeOrderModel_->setCurrentInitiative(character->initiative());
     }
 
     initiativeView_->setActiveIndex(previousIndex);

@@ -260,25 +260,7 @@ void CharacterModel::clear() {
     emit roundUpdate(round_);
 }
 
-void CharacterModel::advanceInitiative(int initiative) {
-    if(initiative_ > initiative){
-        //new round so update all characters as not having acted
-        for(auto character : items_){
-            character->setActed(false);
-        }
-        qDebug() << "Advancing round";
-        advanceRound();
-    }
-    
-    initiative_ = initiative;
-
-    if (!items_.isEmpty()) {
-        emit dataChanged(index(0,0), index(items_.size()-1, 0), { CharacterRole });
-    }
-}
-
-void CharacterModel::backtrackInitiative(int initiative){
-    if(initiative_ < initiative) backtrackRound();
+void CharacterModel::setCurrentInitiative(int initiative) {
     initiative_ = initiative;
     if (!items_.isEmpty()) {
         emit dataChanged(index(0,0), index(items_.size()-1, 0), { CharacterRole });
@@ -286,6 +268,11 @@ void CharacterModel::backtrackInitiative(int initiative){
 }
 
 void CharacterModel::advanceRound() {
+    //new round so update all characters as not having acted
+    for(auto character : items_){
+        character->setActed(false);
+    }
+    qDebug() << "Advancing round";
     ++round_;
     emit roundUpdate(round_);
 }

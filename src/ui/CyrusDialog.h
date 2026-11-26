@@ -28,6 +28,12 @@ public slots:
     // Shows the roster name in the roster combo box and loads it.
     void selectRoster(const QString& rosterName);
 
+public:
+    // Grabs the window once per tab, with that tab showing, in tab order. Each
+    // grab is keyed by the tab's title in lower case (e.g. "combat"). The
+    // current tab is restored afterwards.
+    QList<QPair<QString, QPixmap>> grabTabs();
+
 private:
     Ui::CyrusDialog* ui;  // generated UI object
 

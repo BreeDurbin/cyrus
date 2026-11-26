@@ -3,7 +3,7 @@
 #   1. build  - ./build.sh --standalone succeeds
 #   2. tests  - every ctest test passes
 #   3. run    - build-standalone/cyrus runs for 5s with a gold roster loaded, quits
-#               cleanly with no errors logged, and saves a screenshot
+#               cleanly with no errors logged, and saves a screenshot of each tab
 # Exits non-zero if any step fails. Logs are kept in build-standalone/check/.
 set -u
 
@@ -66,10 +66,12 @@ if [ "$build_status" -ne 0 ]; then
     result 1
 else
     # Load a gold roster (read-only) so the window has content, let cyrus quit
-    # itself and save a screenshot. Prefix each Qt log line with its type so
+    # itself and save a screenshot of each tab. Prefix each Qt log line with its type so
     # errors can be told apart from noise. timeout only catches a hang.
+    # --screenshot cyrus.png writes cyrus-<tab>.png for every tab.
     screenshot=$log_dir/cyrus.png
-    rm -f "$screenshot"
+    screenshot_tabs="combat creatures"
+    rm -f "$log_dir"/cyrus*.png
     QT_MESSAGE_PATTERN='%{type}: %{message}' \
         timeout $((run_seconds + 30)) "./$build_dir/cyrus" \
             --working-dir gold_data --roster "Hero's Party" \
@@ -86,12 +88,15 @@ else
         echo "  App exited with code $run_exit"
         run_status=1
     fi
-    if [ -s "$screenshot" ]; then
-        echo "  Screenshot: $screenshot"
-    else
-        echo "  Screenshot missing: $screenshot"
-        run_status=1
-    fi
+    for tab in $screenshot_tabs; do
+        tab_screenshot=$log_dir/cyrus-$tab.png
+        if [ -s "$tab_screenshot" ]; then
+            echo "  Screenshot ($tab): $tab_screenshot"
+        else
+            echo "  Screenshot missing ($tab): $tab_screenshot"
+            run_status=1
+        fi
+    done
     errors=$(grep -iE '^(critical|fatal):|error|segmentation fault|abort' "$log_dir/run.log")
     if [ -n "$errors" ]; then
         echo "  Errors logged:"

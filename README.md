@@ -98,7 +98,7 @@ Tests tagged `[bug]` with `[!shouldfail]` pin down known bugs: they are expected
 
 ## Headless runs and checks:
 
-`./check.sh` builds the standalone target, runs the tests and runs Cyrus for 5 seconds, printing PASS or FAIL for each step. Logs and a screenshot of the window go to `build-standalone/check/`.
+`./check.sh` builds the standalone target, runs the tests and runs Cyrus for 5 seconds, printing PASS or FAIL for each step. Logs and a screenshot of each tab (`cyrus-combat.png`, `cyrus-creatures.png`) go to `build-standalone/check/`.
 
 Cyrus takes a few options for scripted and headless runs (`cyrus --help` lists them):
 ```
@@ -108,7 +108,8 @@ Cyrus takes a few options for scripted and headless runs (`cyrus --help` lists t
 ./build-standalone/cyrus --roster "Hero's Party"
 # quit with exit code 0 after 5 seconds
 ./build-standalone/cyrus --quit-after 5000
-# save the window as a PNG and quit (exit code 1 if the file can't be written)
+# save a PNG of each tab and quit: writes cyrus-combat.png and cyrus-creatures.png
+# (exit code 1 if a file can't be written)
 ./build-standalone/cyrus --working-dir gold_data --roster "Hero's Party" --screenshot cyrus.png
 ```
 

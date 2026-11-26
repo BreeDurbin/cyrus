@@ -149,8 +149,8 @@ TEST_CASE("CharacterModel::clear empties the model", "[model][CharacterModel]") 
 TEST_CASE("CharacterModel::clear resets the round and segment", "[model][CharacterModel]") {
     CharacterModel model;
     model.appendItem(makeCharacter("Ragnar", 3));
-    model.advanceInitiative(5);
-    model.advanceInitiative(2); // round 2
+    model.setCurrentInitiative(5);
+    model.advanceRound(); // round 2
 
     QList<int> rounds;
     QObject::connect(&model, &CharacterModel::roundUpdate, [&](int r) { rounds << r; });
@@ -159,7 +159,7 @@ TEST_CASE("CharacterModel::clear resets the round and segment", "[model][Charact
 
     model.appendItem(makeCharacter("Orc", 4));
     CHECK(model.data(model.index(0, 0), InitiativeRole).toInt() == 0);
-    model.advanceInitiative(4); // first segment of the new combat, still round 1
+    model.setCurrentInitiative(4); // first segment of the new combat, still round 1
     CHECK(rounds == QList<int>{1});
 }
 
@@ -325,20 +325,25 @@ TEST_CASE("CharacterModel tracks the current segment and round", "[model][Charac
     QList<int> rounds;
     QObject::connect(&model, &CharacterModel::roundUpdate, [&](int r) { rounds << r; });
 
-    model.advanceInitiative(3);
+    model.setCurrentInitiative(3);
     CHECK(model.data(model.index(0, 0), InitiativeRole).toInt() == 3);
     CHECK(rounds.isEmpty());
 
-    SECTION("moving to a lower segment starts a new round and resets acted flags") {
+    SECTION("changing the segment never changes the round") {
+        model.setCurrentInitiative(1);
+        model.setCurrentInitiative(9);
+        CHECK(rounds.isEmpty());
+        CHECK(model.data(model.index(0, 0), InitiativeRole).toInt() == 9);
+    }
+    SECTION("a new round resets acted flags") {
         ragnar->setActed(true);
-        model.advanceInitiative(1);
+        model.advanceRound();
         CHECK(rounds == QList<int>{2});
         CHECK_FALSE(ragnar->hasActed());
-        CHECK(model.data(model.index(0, 0), InitiativeRole).toInt() == 1);
     }
-    SECTION("backtracking past the start of the round goes back a round") {
-        model.advanceInitiative(1); // round 2
-        model.backtrackInitiative(9);
+    SECTION("backtracking a round goes back a round") {
+        model.advanceRound();
+        model.backtrackRound();
         CHECK(rounds == QList<int>{2, 1});
     }
     SECTION("rounds never go below 1") {

@@ -93,6 +93,17 @@ TEST_CASE_METHOD(DialogFixture, "Dialog starts on the combat tab with an empty r
     CHECK(find<QPushButton>("previousButton")->isHidden());
 }
 
+TEST_CASE_METHOD(DialogFixture, "grabTabs grabs every tab by name and keeps the current tab", "[ui]") {
+    dialog.show();
+    const auto grabs = dialog.grabTabs();
+    REQUIRE(grabs.size() == 2);
+    CHECK(grabs[0].first == "combat");
+    CHECK(grabs[1].first == "creatures");
+    CHECK(grabs[0].second.size() == dialog.size() * dialog.devicePixelRatio());
+    CHECK(grabs[0].second.toImage() != grabs[1].second.toImage());
+    CHECK(find<QTabWidget>("mainTabWidget")->currentWidget()->objectName() == "combatTab");
+}
+
 TEST_CASE_METHOD(DialogFixture, "Roster menu lists the saved rosters in cyrus_data/roster", "[ui][roster]") {
     CHECK(rosterMenuEntries() == QStringList{"Band of the Hawk", "Encounter 1", "Hero's Party", "default_name"});
 }
@@ -207,11 +218,10 @@ TEST_CASE_METHOD(DialogFixture, "Next logs each turn and keeps everyone in the o
     CHECK(model("initiativeOrder")->rowCount() == 3);
 }
 
-// CharacterModel::advanceInitiative only starts a new round when the next
-// initiative is lower than the current one, so wrapping from the last row back to
-// the first never counts a round when everyone shares an initiative, which is the
-// case for any freshly loaded roster.
-TEST_CASE_METHOD(DialogFixture, "Wrapping past the last row counts a new round when initiatives are equal", "[ui][initiative][bug][!shouldfail]") {
+// Regression: a new round used to start only when the next initiative was lower
+// than the current one, so a freshly loaded roster (everyone on one initiative)
+// stayed on round 1 forever.
+TEST_CASE_METHOD(DialogFixture, "Wrapping past the last row counts a new round when initiatives are equal", "[ui][initiative]") {
     dialog.selectRoster("Hero's Party");
     click("addAllToInitiativeButton");
     stepForward(3);
