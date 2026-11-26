@@ -18,6 +18,7 @@ add_executable(
     model/RosterModelTests.cpp
     controller/TomlHelperTests.cpp
     controller/CharacterControllerTests.cpp
+    ui/CyrusDialogTests.cpp
 )
 
 target_include_directories(cyrus_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -27,10 +28,19 @@ target_compile_definitions(
         CYRUS_GOLD_DATA_DIR="${CMAKE_SOURCE_DIR}/gold_data/cyrus_data/roster"
 )
 
+if(CYRUS_STANDALONE)
+    target_compile_definitions(cyrus_tests PRIVATE CYRUS_FONT_DIR="${CMAKE_SOURCE_DIR}/asset/font")
+endif()
+
 target_link_libraries(
     cyrus_tests
     PRIVATE
         catch2
+        ui
+        view
+        delegate
+        style
+        asset
         controller
         model
         shared

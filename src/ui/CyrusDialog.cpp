@@ -527,6 +527,11 @@ void CyrusDialog::centerOnCurrentInitiative(const QModelIndex& index) {
     }
 }
 
+void CyrusDialog::selectRoster(const QString& rosterName) {
+    ui->rosterGroupsComboBox->setText(rosterName);
+    onRosterSelectionChanged(rosterName);
+}
+
 void CyrusDialog::onRosterSelectionChanged(const QString& selectedRoster) {
     if (selectedRoster.isEmpty()) {
         qWarning() << "No roster selected to load.";

@@ -2,7 +2,8 @@
 # Check that Cyrus is in a good state, using the standalone (vendored Qt) build.
 #   1. build  - ./build.sh --standalone succeeds
 #   2. tests  - every ctest test passes
-#   3. run    - build-standalone/cyrus stays up for 5s with no errors logged
+#   3. run    - build-standalone/cyrus runs for 5s with a gold roster loaded, quits
+#               cleanly with no errors logged, and saves a screenshot
 # Exits non-zero if any step fails. Logs are kept in build-standalone/check/.
 set -u
 
@@ -64,16 +65,31 @@ if [ "$build_status" -ne 0 ]; then
     echo "  Skipped: build failed"
     result 1
 else
-    # Prefix each Qt log line with its type so errors can be told apart from noise.
+    # Load a gold roster (read-only) so the window has content, let cyrus quit
+    # itself and save a screenshot. Prefix each Qt log line with its type so
+    # errors can be told apart from noise. timeout only catches a hang.
+    screenshot=$log_dir/cyrus.png
+    rm -f "$screenshot"
     QT_MESSAGE_PATTERN='%{type}: %{message}' \
-        timeout "$run_seconds" "./$build_dir/cyrus" >"$log_dir/run.log" 2>&1
+        timeout $((run_seconds + 30)) "./$build_dir/cyrus" \
+            --working-dir gold_data --roster "Hero's Party" \
+            --quit-after $((run_seconds * 1000)) --screenshot "$screenshot" \
+            >"$log_dir/run.log" 2>&1
     run_exit=$?
     run_status=0
-    # timeout exits 124 when it had to stop the app, i.e. it was still running.
-    if [ "$run_exit" -eq 124 ]; then
-        echo "  App still running after ${run_seconds}s"
+    if [ "$run_exit" -eq 0 ]; then
+        echo "  App ran for ${run_seconds}s and quit cleanly"
+    elif [ "$run_exit" -eq 124 ]; then
+        echo "  App hung: did not quit after ${run_seconds}s"
+        run_status=1
     else
-        echo "  App exited early (exit $run_exit)"
+        echo "  App exited with code $run_exit"
+        run_status=1
+    fi
+    if [ -s "$screenshot" ]; then
+        echo "  Screenshot: $screenshot"
+    else
+        echo "  Screenshot missing: $screenshot"
         run_status=1
     fi
     errors=$(grep -iE '^(critical|fatal):|error|segmentation fault|abort' "$log_dir/run.log")

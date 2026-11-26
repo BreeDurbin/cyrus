@@ -25,6 +25,8 @@ signals:
 
 public slots:
     void onRosterSelectionChanged(const QString& selectedRoster);
+    // Shows the roster name in the roster combo box and loads it.
+    void selectRoster(const QString& rosterName);
 
 private:
     Ui::CyrusDialog* ui;  // generated UI object

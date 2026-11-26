@@ -28,6 +28,12 @@ int main(int argc, char* argv[])
     if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
+#ifdef CYRUS_FONT_DIR
+    // The standalone Qt has no fontconfig; see src/main.cpp.
+    if (qEnvironmentVariableIsEmpty("QT_QPA_FONTDIR")) {
+        qputenv("QT_QPA_FONTDIR", CYRUS_FONT_DIR);
+    }
+#endif
     // Keep test output readable; the code under test logs heavily via qDebug.
     qputenv("QT_LOGGING_RULES", "*.debug=false");
 

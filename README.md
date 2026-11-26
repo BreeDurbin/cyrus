@@ -81,20 +81,36 @@ To use a system Qt in a non-standard location, pass its prefix when generating, 
 
 ## Running tests:
 
-Unit tests for the model and controller layers live in `tests/` and use Catch2 (vendored in `third_party/`). The UI layer (widgets, delegates, views) is not unit tested. Tests are built by default in both build modes; pass `-DCYRUS_BUILD_TESTS=OFF` when generating to skip them.
+Tests live in `tests/` and use Catch2 (vendored in `third_party/`). The model and controller layers have unit tests; `tests/ui/` drives the real main window (`[ui]` tag) by finding widgets by their `objectName` from `CyrusDialog.ui` and clicking them. Delegate painting and mouse handling inside list rows are not tested. Tests are built by default in both build modes; pass `-DCYRUS_BUILD_TESTS=OFF` when generating to skip them.
 
 ```
 # run every test (use build-standalone/ for a standalone build)
 ./build/cyrus_tests
 # or through ctest
 ctest --test-dir build --output-on-failure
-# run one area by tag, e.g. [model], [controller], [CharacterModel], [roster]
+# run one area by tag, e.g. [model], [controller], [ui], [CharacterModel], [roster]
 ./build/cyrus_tests "[controller]"
 ```
 
 Tests run on Qt's `offscreen` platform, so no display is needed. Roster save/load tests work in a temporary directory and never touch your `cyrus_data/`.
 
 Tests tagged `[bug]` with `[!shouldfail]` pin down known bugs: they are expected to fail and are reported as "failed as expected". When one of those bugs gets fixed, its test starts passing and Catch2 reports it as a failure; remove the `[!shouldfail]` tag at that point. List them with `./build/cyrus_tests "[bug]" --list-tests`.
+
+## Headless runs and checks:
+
+`./check.sh` builds the standalone target, runs the tests and runs Cyrus for 5 seconds, printing PASS or FAIL for each step. Logs and a screenshot of the window go to `build-standalone/check/`.
+
+Cyrus takes a few options for scripted and headless runs (`cyrus --help` lists them):
+```
+# run in another directory, so rosters come from <dir>/cyrus_data/roster
+./build-standalone/cyrus --working-dir gold_data
+# load a saved roster on startup
+./build-standalone/cyrus --roster "Hero's Party"
+# quit with exit code 0 after 5 seconds
+./build-standalone/cyrus --quit-after 5000
+# save the window as a PNG and quit (exit code 1 if the file can't be written)
+./build-standalone/cyrus --working-dir gold_data --roster "Hero's Party" --screenshot cyrus.png
+```
 
 ## Project Trello Board:
 [Located Here](https://trello.com/invite/b/68bbd304d3e025eda942d0c7/ATTI93e6d614c5540b3da8ed7a33a41a0e6689DAEC3A/project-cyrus)
